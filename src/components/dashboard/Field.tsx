@@ -12,7 +12,7 @@ interface FieldProps {
 }
 
 const inputClass =
-  'mt-1.5 block w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-[#0f1f3a] focus:outline-2 focus:outline-offset-2 focus:outline-[#c8a85c] disabled:bg-slate-50 disabled:text-slate-500';
+  'mt-1.5 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 disabled:text-slate-500';
 
 export function Field({
   label,
@@ -44,7 +44,6 @@ export function Field({
 }
 
 interface TextInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  /** override default styling if needed */
   className?: string;
 }
 
@@ -83,7 +82,7 @@ export function Checkbox({ label, id, ...props }: CheckboxProps) {
       <input
         id={id}
         type="checkbox"
-        className="h-4 w-4 border-slate-300 text-[#0f1f3a] focus:ring-2 focus:ring-[#c8a85c] focus:ring-offset-1"
+        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
         {...props}
       />
       <span className="text-sm text-slate-900">{label}</span>
@@ -109,7 +108,7 @@ export function FormActions({
       {cancelHref && (
         <a
           href={cancelHref}
-          className="border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
         >
           Cancel
         </a>
@@ -117,10 +116,10 @@ export function FormActions({
       <button
         type="submit"
         disabled={isSubmitting}
-        className={`px-4 py-2 text-sm font-semibold text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c] disabled:cursor-not-allowed disabled:bg-slate-400 ${
+        className={`rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:bg-slate-400 ${
           destructive
             ? 'bg-rose-600 hover:bg-rose-700'
-            : 'bg-[#0f1f3a] hover:bg-[#1a2f5a]'
+            : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
         {isSubmitting ? 'Saving…' : submitLabel}
@@ -134,7 +133,7 @@ export function FormErrorBanner({ error }: { error: string | null }) {
   return (
     <div
       role="alert"
-      className="mb-6 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+      className="mb-6 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
     >
       {error}
     </div>
