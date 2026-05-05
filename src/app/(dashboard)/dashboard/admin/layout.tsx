@@ -1,5 +1,6 @@
 import { requirePageRole } from '@/services/auth.guards';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { getUser } from '@/services/user.service';
 
 export const metadata = {
   title: {
@@ -14,16 +15,16 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   // Gate: only admins past this point.
-  const user = await requirePageRole(['admin']);
+  const auth = await requirePageRole(['admin']);
+  const profile = await getUser(auth.uid);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <DashboardSidebar
-        role="admin"
-        displayName={user.email.split('@')[0] || 'Admin'}
-        email={user.email}
-      />
-      <div className="lg:pl-64">{children}</div>
-    </div>
+    <DashboardShell
+      role="admin"
+      displayName={profile?.displayName ?? auth.email.split('@')[0] ?? 'Admin'}
+      email={auth.email}
+    >
+      {children}
+    </DashboardShell>
   );
 }

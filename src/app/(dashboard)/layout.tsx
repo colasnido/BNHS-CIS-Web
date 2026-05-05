@@ -1,13 +1,9 @@
 /**
  * Layout for the (dashboard) route group.
  *
- * IMPORTANT: This layout replaces the public site's navbar/footer because
- * dashboard pages need the sidebar shell instead. The route group convention
- * means files at /(dashboard)/dashboard/* render with this layout INSTEAD of
- * the public site's navbar/footer (when the public pages are inside (public)).
- *
- * Auth is enforced inside each role's nested layout — not here — so this
- * file stays minimal.
+ * Each role's nested layout (admin/, faculty/, student/) handles auth and
+ * renders the DashboardShell. This layout stays minimal — it exists mainly
+ * so the route group is well-formed.
  */
 
 export default function DashboardGroupLayout({

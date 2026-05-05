@@ -2,19 +2,18 @@ import Link from 'next/link';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { requirePageRole } from '@/services/auth.guards';
 import { getUser } from '@/services/user.service';
-import { getClass } from '@/services/class.service';
 import { listSchedulesByClass } from '@/services/schedule.service';
 import { listSubjectsByClass } from '@/services/subject.service';
-import { listUsersByRole } from '@/services/user.service';
-import { listRecentAnnouncements } from '@/services/announcement.service';
-import { listUpcomingEvents } from '@/services/event.service';
+import { listAnnouncements } from '@/services/announcement.service';
+import { listEvents } from '@/services/event.service';
+import { getClass } from '@/services/class.service';
 import type { DayOfWeek } from '@/features/schedules/types';
 
 export const metadata = { title: 'Overview' };
 export const dynamic = 'force-dynamic';
 
 const DAY_KEYS: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-const DAY_FULL_NAMES: Record<DayOfWeek, string> = {
+const DAY_LABELS: Record<DayOfWeek, string> = {
   mon: 'Monday',
   tue: 'Tuesday',
   wed: 'Wednesday',
@@ -24,264 +23,212 @@ const DAY_FULL_NAMES: Record<DayOfWeek, string> = {
   sun: 'Sunday',
 };
 
-function formatTime(hhmm: string): string {
-  const [hStr, mStr] = hhmm.split(':');
-  const h = Number(hStr);
-  const period = h >= 12 ? 'PM' : 'AM';
-  const display = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${display}:${mStr} ${period}`;
-}
-
 export default async function StudentOverviewPage() {
   const auth = await requirePageRole(['student']);
   const profile = await getUser(auth.uid);
+  const firstName = profile?.displayName?.split(' ')[0] ?? '';
 
-  // If the student has no class assigned, show a setup-needed banner instead
-  if (!profile?.classId) {
-    return (
-      <>
-        <DashboardPageHeader
-          title={`Welcome${profile?.displayName ? `, ${profile.displayName}` : ''}`}
-        />
-        <div className="p-6 sm:p-8">
-          <div className="border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
-            <p className="font-medium">Account setup pending</p>
-            <p className="mt-2">
-              You haven&apos;t been assigned to a class yet. Please contact your
-              school administrator so they can complete your account setup.
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
+  const today = DAY_KEYS[new Date().getDay()];
+  const todayLabel = DAY_LABELS[today];
 
-  // Parallel fetches for everything we need on the overview
-  const [
-    classRecord,
-    schedules,
-    subjects,
-    allFaculty,
-    announcements,
-    events,
-  ] = await Promise.all([
-    getClass(profile.classId),
-    listSchedulesByClass(profile.classId),
-    listSubjectsByClass(profile.classId),
-    listUsersByRole('faculty'),
-    listRecentAnnouncements(3),
-    listUpcomingEvents(3),
+  // Student needs a class assignment to have schedules/subjects.
+  // Without one, all "today's schedule" / "subjects" queries are empty.
+  const classId = profile?.classId;
+
+  // Parallel reads
+  const [klass, schedules, subjects, announcements, events] = await Promise.all([
+    classId ? getClass(classId) : Promise.resolve(null),
+    classId ? listSchedulesByClass(classId) : Promise.resolve([]),
+    classId ? listSubjectsByClass(classId) : Promise.resolve([]),
+    listAnnouncements(),
+    listEvents(),
   ]);
 
-  const facultyMap = new Map(allFaculty.map((f) => [f.uid, f]));
-  const subjectMap = new Map(subjects.map((s) => [s.id, s]));
-  const adviser = classRecord?.adviserId
-    ? facultyMap.get(classRecord.adviserId)
-    : null;
-
-  // Today's classes
-  const todayKey = DAY_KEYS[new Date().getDay()];
-  const todaysSchedule = schedules
-    .filter((s) => s.dayOfWeek === todayKey)
+  const todaySchedules = schedules
+    .filter((s) => s.dayOfWeek === today)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const subjectMap = new Map(subjects.map((s) => [s.id, s]));
+
+  // "Latest from school" — combine 3 most recent announcements + 3 nearest events
+  const recentAnnouncements = announcements
+    // Show announcements meant for students (or "all" audiences)
+    .filter((a) => a.published)
+    .slice(0, 3)
+    .map((a) => ({
+      type: 'announcement' as const,
+      id: a.id,
+      title: a.title,
+      date: a.createdAt,
+      detail: a.priority === 'high' ? 'Important' : '',
+    }));
+  const upcomingEvents = events
+    .filter((e) => e.published && new Date(e.startDate) >= new Date())
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    )
+    .slice(0, 3)
+    .map((e) => ({
+      type: 'event' as const,
+      id: e.id,
+      title: e.title,
+      date: e.startDate,
+      detail: e.location,
+    }));
+
+  // Show events first (date-anchored), then announcements
+  const feed = [...upcomingEvents, ...recentAnnouncements];
 
   return (
     <>
       <DashboardPageHeader
-        title={`Welcome${profile.displayName ? `, ${profile.displayName.split(' ')[0]}` : ''}`}
-        description={
-          classRecord
-            ? `Grade ${classRecord.gradeLevel} - ${classRecord.name} · ${classRecord.schoolYear}`
-            : undefined
-        }
+        title={firstName ? `Hi, ${firstName}` : 'Today'}
       />
 
-      <div className="space-y-8 p-6 sm:p-8">
-        {/* Today's classes — most important info above the fold */}
-        <section aria-labelledby="today-heading">
-          <div className="mb-3 flex items-center justify-between">
+      <div className="space-y-6 px-4 pb-10 sm:px-6">
+        {/* SECTION 1 — Today's schedule */}
+        <section
+          aria-labelledby="today-schedule"
+          className="rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
+          <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
             <h2
-              id="today-heading"
-              className="font-serif text-lg font-semibold text-slate-900"
+              id="today-schedule"
+              className="text-sm font-semibold text-slate-900"
             >
-              {DAY_FULL_NAMES[todayKey]}&apos;s classes
+              {todayLabel}&apos;s schedule
             </h2>
             <Link
               href="/dashboard/student/schedule"
-              className="text-xs font-medium text-[#0f1f3a] hover:underline"
+              className="text-xs font-medium text-blue-600 hover:text-blue-800"
             >
-              View full schedule →
+              Full week
             </Link>
-          </div>
+          </header>
 
-          {todaysSchedule.length === 0 ? (
-            <div className="border border-dashed border-slate-300 bg-white p-8 text-center">
-              <p className="text-sm text-slate-600">
-                No classes scheduled today. Enjoy your day!
-              </p>
-            </div>
+          {todaySchedules.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-slate-500">
+              No classes scheduled for {todayLabel.toLowerCase()}.
+            </p>
           ) : (
-            <ul className="space-y-2">
-              {todaysSchedule.map((slot) => {
-                const subject = subjectMap.get(slot.subjectId);
-                const teacher = facultyMap.get(slot.facultyId);
+            <ol className="divide-y divide-slate-100">
+              {todaySchedules.map((s) => {
+                const subj = subjectMap.get(s.subjectId);
                 return (
                   <li
-                    key={slot.id}
-                    className="flex items-center gap-4 border-l-4 border-[#c8a85c] bg-white p-4 shadow-sm"
+                    key={s.id}
+                    className="flex items-start gap-4 border-l-4 border-blue-500 px-5 py-3"
                   >
-                    <div className="min-w-[120px] font-mono text-xs font-medium text-slate-700 sm:text-sm">
-                      <p>{formatTime(slot.startTime)}</p>
-                      <p className="text-slate-500">
-                        {formatTime(slot.endTime)}
-                      </p>
+                    <div className="w-24 shrink-0 font-mono text-xs text-slate-600">
+                      {s.startTime}
+                      <br />
+                      <span className="text-slate-400">{s.endTime}</span>
                     </div>
-                    <div className="flex-1 border-l border-slate-200 pl-4">
-                      <p className="text-sm font-semibold text-slate-900 sm:text-base">
-                        {subject?.name ?? 'Unknown subject'}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900">
+                        {subj?.name ?? 'Unknown subject'}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {subject?.code}
-                        {teacher ? ` · ${teacher.displayName}` : ''}
-                        {slot.room ? ` · ${slot.room}` : ''}
+                        {subj?.code}
+                        {s.room && (
+                          <>
+                            {' '}
+                            · <span>{s.room}</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </li>
                 );
               })}
-            </ul>
+            </ol>
           )}
         </section>
 
-        {/* Quick info cards */}
-        <section aria-labelledby="info-heading" className="grid gap-4 sm:grid-cols-3">
-          <h2 id="info-heading" className="sr-only">
-            Class information
+        {/* SECTION 2 — Quick info dl strip */}
+        <section
+          aria-labelledby="quick-info"
+          className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm"
+        >
+          <h2 id="quick-info" className="sr-only">
+            Quick info
           </h2>
-
-          <div className="border border-slate-200 bg-white p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Class
-            </p>
-            <p className="mt-2 font-serif text-lg font-semibold text-slate-900">
-              {classRecord ? `Grade ${classRecord.gradeLevel} - ${classRecord.name}` : '—'}
-            </p>
-            {classRecord?.section && (
-              <p className="mt-0.5 text-xs text-slate-500">
-                Section {classRecord.section}
-              </p>
-            )}
-          </div>
-
-          <Link
-            href="/dashboard/student/adviser"
-            className="block border border-slate-200 bg-white p-5 transition-colors hover:border-[#0f1f3a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Adviser
-            </p>
-            <p className="mt-2 font-serif text-lg font-semibold text-slate-900">
-              {adviser?.displayName ?? 'Not assigned'}
-            </p>
-            {adviser?.department && (
-              <p className="mt-0.5 text-xs text-slate-500">{adviser.department}</p>
-            )}
-            {adviser && (
-              <p className="mt-3 text-xs font-medium text-[#0f1f3a]">
-                Contact details →
-              </p>
-            )}
-          </Link>
-
-          <Link
-            href="/dashboard/student/subjects"
-            className="block border border-slate-200 bg-white p-5 transition-colors hover:border-[#0f1f3a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Subjects
-            </p>
-            <p className="mt-2 font-serif text-lg font-semibold text-slate-900">
-              {subjects.length}
-            </p>
-            <p className="mt-3 text-xs font-medium text-[#0f1f3a]">
-              View all subjects →
-            </p>
-          </Link>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <dt className="text-xs text-slate-500">Class</dt>
+              <dd className="mt-0.5 text-sm font-medium text-slate-900">
+                {klass ? `Grade ${klass.gradeLevel} - ${klass.name}` : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500">Subjects this term</dt>
+              <dd className="mt-0.5 text-sm font-medium text-slate-900">
+                <Link
+                  href="/dashboard/student/subjects"
+                  className="hover:text-blue-700"
+                >
+                  {subjects.length} subject{subjects.length === 1 ? '' : 's'} →
+                </Link>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500">Adviser</dt>
+              <dd className="mt-0.5 text-sm font-medium text-slate-900">
+                <Link
+                  href="/dashboard/student/adviser"
+                  className="hover:text-blue-700"
+                >
+                  View contact →
+                </Link>
+              </dd>
+            </div>
+          </dl>
         </section>
 
-        {/* Recent announcements + upcoming events */}
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold text-slate-900">
-                Recent announcements
-              </h2>
-              <Link
-                href="/announcements"
-                className="text-xs font-medium text-[#0f1f3a] hover:underline"
-              >
-                View all →
-              </Link>
-            </div>
-            <div className="border border-slate-200 bg-white">
-              {announcements.length === 0 ? (
-                <p className="p-6 text-sm text-slate-500">
-                  No announcements right now.
-                </p>
-              ) : (
-                <ul className="divide-y divide-slate-100">
-                  {announcements.map((a) => (
-                    <li key={a.id} className="p-4">
+        {/* SECTION 3 — Latest from school (combined feed) */}
+        <section
+          aria-labelledby="latest"
+          className="rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
+          <h2
+            id="latest"
+            className="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-900"
+          >
+            Latest from school
+          </h2>
+          {feed.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-slate-500">
+              No recent announcements or upcoming events.
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {feed.map((item) => (
+                <li key={`${item.type}-${item.id}`} className="px-5 py-3">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 inline-block rounded border px-2 py-0.5 text-[11px] font-medium ${
+                        item.type === 'event'
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      {item.type === 'event' ? 'Event' : 'News'}
+                    </span>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900">
-                        {a.title}
+                        {item.title}
                       </p>
-                      <p className="mt-1 line-clamp-2 text-xs text-slate-600">
-                        {a.summary}
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {new Date(item.date).toLocaleDateString()}
+                        {item.detail && ` · ${item.detail}`}
                       </p>
-                      <p className="mt-2 text-[11px] text-slate-400">
-                        {new Date(a.createdAt).toLocaleDateString()}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold text-slate-900">
-                Upcoming events
-              </h2>
-              <Link
-                href="/events"
-                className="text-xs font-medium text-[#0f1f3a] hover:underline"
-              >
-                View all →
-              </Link>
-            </div>
-            <div className="border border-slate-200 bg-white">
-              {events.length === 0 ? (
-                <p className="p-6 text-sm text-slate-500">
-                  Nothing on the calendar yet.
-                </p>
-              ) : (
-                <ul className="divide-y divide-slate-100">
-                  {events.map((e) => (
-                    <li key={e.id} className="p-4">
-                      <p className="text-sm font-medium text-slate-900">
-                        {e.title}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {new Date(e.startDate).toLocaleDateString()} ·{' '}
-                        {e.location}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </>
