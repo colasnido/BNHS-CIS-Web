@@ -1,0 +1,10 @@
+# ─── ADD THESE LINES TO YOUR EXISTING .gitignore ───
+
+# Environment variables — NEVER commit
+.env
+.env.local
+.env*.local
+
+# Firebase service account JSON files (if you ever download one directly)
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
