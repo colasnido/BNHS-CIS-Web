@@ -166,7 +166,7 @@ export function ClassesAdminClient({ classes, faculty }: ClassesAdminClientProps
             'grade_level',
             'section',
             'school_year',
-            'adviser_email',
+            'adviser_name',
           ],
           templateRows: [
             {
@@ -174,14 +174,16 @@ export function ClassesAdminClient({ classes, faculty }: ClassesAdminClientProps
               grade_level: '7',
               section: 'A',
               school_year: `${currentYear}-${currentYear + 1}`,
-              adviser_email: faculty[0]?.email ?? '',
+              // Audit fix #6: name-based reference, not email.
+              // Resolver accepts partial names ("Cruz" matches "Jose Cruz").
+              adviser_name: faculty[0]?.displayName ?? '',
             },
             {
               name: 'St. Benedict',
               grade_level: '7',
               section: 'B',
               school_year: `${currentYear}-${currentYear + 1}`,
-              adviser_email: '',
+              adviser_name: '',
             },
           ],
           validateRow: (row) => {

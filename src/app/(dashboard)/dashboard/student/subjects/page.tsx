@@ -106,10 +106,8 @@ export default async function StudentSubjectsPage() {
                   key={subject.id}
                   className="border border-slate-200 bg-white p-5"
                 >
-                  <p className="font-mono text-xs font-medium text-slate-500">
-                    {subject.code}
-                  </p>
-                  <h3 className="mt-1 font-serif text-lg font-semibold text-slate-900">
+                  {/* Audit fix #5: subject.code removed */}
+                  <h3 className="font-serif text-lg font-semibold text-slate-900">
                     {subject.name}
                   </h3>
 

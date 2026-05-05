@@ -21,6 +21,13 @@ interface SubjectsAdminClientProps {
   faculty: User[];
 }
 
+/**
+ * Audit fixes applied:
+ *   - #5 (drop code): Code column removed from table; subject is now identified
+ *     by (name, class) within the system
+ *   - #6 (CSV uses names): import takes faculty_name + class_section instead
+ *     of faculty_email + class_name
+ */
 export function SubjectsAdminClient({
   subjects,
   classes,
@@ -37,13 +44,10 @@ export function SubjectsAdminClient({
 
   const columns: Column<Subject>[] = [
     {
-      header: 'Code',
-      cell: (s) => <span className="font-mono text-slate-900">{s.code}</span>,
-      editable: { field: 'code', type: 'text' },
-    },
-    {
       header: 'Name',
-      cell: (s) => <span className="font-medium text-slate-900">{s.name}</span>,
+      cell: (s) => (
+        <span className="font-medium text-slate-900">{s.name}</span>
+      ),
       editable: { field: 'name', type: 'text' },
     },
     {
@@ -110,8 +114,18 @@ export function SubjectsAdminClient({
               href="/dashboard/admin/subjects/new"
               className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               New subject
             </Link>
@@ -123,9 +137,11 @@ export function SubjectsAdminClient({
         <DataTable
           records={subjects}
           getKey={(s) => s.id}
-          searchFields={(s) => [s.code, s.name, s.description ?? '']}
+          searchFields={(s) => [s.name, s.description ?? '']}
           searchPlaceholder="Search subjects..."
-          filters={[{ key: 'classId', label: 'Class', options: classFilterOptions }]}
+          filters={[
+            { key: 'classId', label: 'Class', options: classFilterOptions },
+          ]}
           filterAccessor={(s, key) => (s as Record<string, string>)[key] ?? ''}
           columns={columns}
           bulkActions={bulkActions}
@@ -153,30 +169,27 @@ export function SubjectsAdminClient({
         config={{
           endpoint: '/api/subjects/import',
           itemLabel: 'subjects',
-          requiredColumns: ['code', 'name', 'class_name', 'faculty_email'],
+          requiredColumns: ['name', 'class_section', 'faculty_name'],
           knownColumns: [
-            'code',
             'name',
+            'class_section',
+            'faculty_name',
             'description',
-            'class_name',
-            'faculty_email',
           ],
           templateRows: [
             {
-              code: 'MATH-7',
               name: 'Mathematics 7',
+              class_section: classes[0]?.name ?? 'St. Augustine',
+              faculty_name: faculty[0]?.displayName ?? 'Jane Cruz',
               description: 'Pre-algebra and basic geometry',
-              class_name: classes[0]?.name ?? 'St. Augustine',
-              faculty_email: faculty[0]?.email ?? '',
             },
           ],
           validateRow: (row) => {
-            if (!row.code) return 'Code is required';
-            if (!row.name) return 'Name is required';
-            if (!row.class_name) return 'Class name is required';
-            if (!row.faculty_email || !row.faculty_email.includes('@')) {
-              return 'Valid faculty email required';
-            }
+            if (!row.name?.trim()) return 'name is required';
+            if (!row.class_section?.trim())
+              return 'class_section is required';
+            if (!row.faculty_name?.trim())
+              return 'faculty_name is required';
             return null;
           },
         }}

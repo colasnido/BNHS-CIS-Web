@@ -20,6 +20,11 @@ interface SubjectFormProps {
   faculty: User[];
 }
 
+/**
+ * Audit fix #5: `code` field removed.
+ * Subject is uniquely identified by (name, classId) within the system.
+ * The CSV import uses (subject_name, class_section) as the lookup key.
+ */
 export function SubjectForm({ subject, classes, faculty }: SubjectFormProps) {
   const router = useRouter();
   const isEdit = Boolean(subject);
@@ -35,7 +40,6 @@ export function SubjectForm({ subject, classes, faculty }: SubjectFormProps) {
 
     const formData = new FormData(e.currentTarget);
     const payload = {
-      code: String(formData.get('code') ?? '').trim(),
       name: String(formData.get('name') ?? '').trim(),
       description:
         String(formData.get('description') ?? '').trim() || undefined,
@@ -112,40 +116,21 @@ export function SubjectForm({ subject, classes, faculty }: SubjectFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormErrorBanner error={formError} />
 
-      <div className="grid gap-6 sm:grid-cols-3">
-        <Field
-          label="Subject code"
-          htmlFor="code"
+      <Field
+        label="Subject name"
+        htmlFor="name"
+        required
+        error={fieldErrors.name}
+        hint="Must be unique within the selected class"
+      >
+        <TextInput
+          id="name"
+          name="name"
           required
-          error={fieldErrors.code}
-          hint="Short identifier"
-        >
-          <TextInput
-            id="code"
-            name="code"
-            required
-            defaultValue={subject?.code}
-            placeholder="MATH-11"
-          />
-        </Field>
-
-        <div className="sm:col-span-2">
-          <Field
-            label="Subject name"
-            htmlFor="name"
-            required
-            error={fieldErrors.name}
-          >
-            <TextInput
-              id="name"
-              name="name"
-              required
-              defaultValue={subject?.name}
-              placeholder="General Mathematics"
-            />
-          </Field>
-        </div>
-      </div>
+          defaultValue={subject?.name}
+          placeholder="General Mathematics"
+        />
+      </Field>
 
       <Field
         label="Description"
@@ -187,7 +172,7 @@ export function SubjectForm({ subject, classes, faculty }: SubjectFormProps) {
         </Field>
 
         <Field
-          label="Faculty"
+          label="Teacher"
           htmlFor="facultyId"
           required
           error={fieldErrors.facultyId}

@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { requireRole } from '@/services/auth.service';
 import { createUser } from '@/services/user.service';
+import { listClasses } from '@/services/class.service';
+import {
+  resolveClassFromList,
+  formatResolutionError,
+} from '@/services/resolver';
 
 interface ImportRow {
+  display_name?: string;
   email?: string;
   password?: string;
-  display_name?: string;
   role?: string;
-  class_id?: string;
+  class_section?: string;
   student_number?: string;
   grade_level?: string;
   department?: string;
@@ -21,20 +26,15 @@ interface ImportRequest {
 /**
  * POST /api/users/import
  *
- * Bulk-creates users from parsed CSV rows. Each row is processed independently
- * so a single bad row doesn't fail the whole import.
+ * CSV format (audit fix #1, #6):
+ *   display_name, email, password, role, class_section, student_number,
+ *   grade_level, department
  *
- * Returns:
- *   {
- *     created: <count>,
- *     failed: <count>,
- *     errors: [{ row: <1-based row number>, message: <text> }]
- *   }
- *
- * Why per-row processing instead of a Firestore batch:
- *   1. createUser does Firebase Auth ops which can't go in a Firestore batch
- *   2. We want partial success — getting 47/50 students imported is better
- *      than rejecting all 50 because one had a bad email
+ * Changes from prior version:
+ *   - class_id replaced with class_section (admin-readable, resolved by name)
+ *   - All fields normalized at write time (handled by createUser)
+ *   - Email kept as direct field (it's the user's login credential, not a
+ *     reference to another record — see audit #6 rationale)
  */
 export async function POST(request: Request) {
   try {
@@ -43,22 +43,55 @@ export async function POST(request: Request) {
 
     if (!Array.isArray(body.rows)) {
       return NextResponse.json(
-        { error: 'Expected `rows` array in request body' },
+        { error: 'Expected `rows` array' },
         { status: 400 }
       );
     }
 
+    const classes = await listClasses();
+
     const errors: { row: number; message: string }[] = [];
     let created = 0;
 
-    // Process sequentially to avoid hammering Firebase Auth (rate limits)
-    // and to give predictable per-row error reporting.
     for (let i = 0; i < body.rows.length; i++) {
       const row = body.rows[i];
-      const rowNumber = i + 2; // +1 for 1-based, +1 for header row
+      const rowNumber = i + 2;
 
       try {
-        const input = transformRow(row);
+        const role = row.role?.trim();
+        const input: Record<string, unknown> = {
+          email: row.email,
+          password: row.password,
+          displayName: row.display_name,
+          role,
+        };
+
+        if (role === 'student') {
+          if (row.class_section?.trim()) {
+            const result = resolveClassFromList(row.class_section, classes);
+            if (!result.ok) {
+              throw new Error(
+                formatResolutionError(row.class_section, result, 'classes')
+              );
+            }
+            input.classId = result.record.id;
+            // gradeLevel: prefer the value from the resolved class for
+            // consistency. If admin typed a different grade_level, it's
+            // probably a typo — we trust the class.
+            input.gradeLevel = result.record.gradeLevel;
+          } else if (row.grade_level?.trim()) {
+            const grade = Number(row.grade_level);
+            if (!Number.isNaN(grade)) input.gradeLevel = grade;
+          }
+          if (row.student_number?.trim()) {
+            input.studentNumber = row.student_number.trim();
+          }
+        }
+
+        if (role === 'faculty' && row.department?.trim()) {
+          input.department = row.department.trim();
+        }
+
         await createUser(input);
         created++;
       } catch (err) {
@@ -73,11 +106,7 @@ export async function POST(request: Request) {
       `[POST /api/users/import] ${created} created, ${errors.length} failed by ${admin.uid}`
     );
 
-    return NextResponse.json({
-      created,
-      failed: errors.length,
-      errors,
-    });
+    return NextResponse.json({ created, failed: errors.length, errors });
   } catch (error) {
     if (error instanceof Error && error.message === 'UNAUTHORIZED') {
       return NextResponse.json(
@@ -99,47 +128,6 @@ export async function POST(request: Request) {
   }
 }
 
-/**
- * Transform a CSV row into the createUser input shape.
- *
- * The CSV uses lowercase_underscore headers (display_name, class_id, etc.)
- * because that's what `csvToObjects` produces. The user schema uses camelCase
- * (displayName, classId), so this is where we convert.
- *
- * Empty strings become undefined so optional fields don't show up in the
- * Firestore doc as empty strings.
- */
-function transformRow(row: ImportRow): Record<string, unknown> {
-  const role = row.role?.trim();
-  const input: Record<string, unknown> = {
-    email: row.email?.trim(),
-    password: row.password,
-    displayName: row.display_name?.trim(),
-    role,
-  };
-
-  if (role === 'student') {
-    if (row.class_id?.trim()) input.classId = row.class_id.trim();
-    if (row.student_number?.trim()) {
-      input.studentNumber = row.student_number.trim();
-    }
-    if (row.grade_level?.trim()) {
-      const grade = Number(row.grade_level);
-      if (!Number.isNaN(grade)) input.gradeLevel = grade;
-    }
-  }
-
-  if (role === 'faculty' && row.department?.trim()) {
-    input.department = row.department.trim();
-  }
-
-  return input;
-}
-
-/**
- * Extract a user-friendly error message from various error shapes that
- * createUser can throw (Zod, Firebase Auth, generic Error).
- */
 function extractErrorMessage(err: unknown): string {
   if (err instanceof ZodError) {
     return err.issues
@@ -148,7 +136,6 @@ function extractErrorMessage(err: unknown): string {
   }
   if (err && typeof err === 'object') {
     const e = err as { code?: string; message?: string };
-    // Firebase Auth errors come as "auth/email-already-exists" style
     if (e.code?.startsWith('auth/')) {
       return e.message?.replace('Firebase: ', '') ?? e.code;
     }

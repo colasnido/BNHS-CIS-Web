@@ -37,6 +37,12 @@ const DAY_OPTIONS: { value: DayOfWeek; label: string }[] = (
   Object.keys(DAY_LABELS) as DayOfWeek[]
 ).map((d) => ({ value: d, label: DAY_LABELS[d] }));
 
+/**
+ * Audit fixes applied to this client:
+ *   - #5 (drop code): subject column shows name only, no code
+ *   - #6 (CSV uses names): import takes subject_name + class_section
+ *     instead of subject_code, with name-based resolver on the backend
+ */
 export function SchedulesAdminClient({
   schedules,
   subjects,
@@ -69,9 +75,7 @@ export function SchedulesAdminClient({
       cell: (s) => {
         const subj = subjectMap.get(s.subjectId);
         return subj ? (
-          <span className="text-slate-900">
-            {subj.code} — {subj.name}
-          </span>
+          <span className="text-slate-900">{subj.name}</span>
         ) : (
           <span className="text-amber-600">Unknown subject</span>
         );
@@ -105,9 +109,7 @@ export function SchedulesAdminClient({
     },
     {
       header: 'Room',
-      cell: (s) => (
-        <span className="text-slate-600">{s.room ?? '—'}</span>
-      ),
+      cell: (s) => <span className="text-slate-600">{s.room ?? '—'}</span>,
       editable: { field: 'room', type: 'text' },
       hideOnTablet: true,
     },
@@ -132,6 +134,13 @@ export function SchedulesAdminClient({
     },
   ];
 
+  // Pick a sensible template subject + class section. We use the first subject
+  // and look up its class so the template row is internally consistent.
+  const templateSubject = subjects[0];
+  const templateClass = templateSubject
+    ? classMap.get(templateSubject.classId)
+    : null;
+
   return (
     <>
       <DashboardPageHeader
@@ -149,8 +158,18 @@ export function SchedulesAdminClient({
               href="/dashboard/admin/schedules/new"
               className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               New schedule
             </Link>
@@ -165,14 +184,15 @@ export function SchedulesAdminClient({
           searchFields={(s) => {
             const subj = subjectMap.get(s.subjectId);
             const cls = classMap.get(s.classId);
+            const t = facultyMap.get(s.facultyId);
             return [
-              subj?.code ?? '',
               subj?.name ?? '',
               cls?.name ?? '',
+              t?.displayName ?? '',
               s.room ?? '',
             ];
           }}
-          searchPlaceholder="Search by subject, class, or room..."
+          searchPlaceholder="Search by subject, class, teacher, or room..."
           filters={[{ key: 'dayOfWeek', label: 'Day', options: DAY_OPTIONS }]}
           filterAccessor={(s, key) => (s as Record<string, string>)[key] ?? ''}
           columns={columns}
@@ -201,9 +221,16 @@ export function SchedulesAdminClient({
         config={{
           endpoint: '/api/schedules/import',
           itemLabel: 'schedules',
-          requiredColumns: ['subject_code', 'day_of_week', 'start_time', 'end_time'],
+          requiredColumns: [
+            'subject_name',
+            'class_section',
+            'day_of_week',
+            'start_time',
+            'end_time',
+          ],
           knownColumns: [
-            'subject_code',
+            'subject_name',
+            'class_section',
             'day_of_week',
             'start_time',
             'end_time',
@@ -211,14 +238,16 @@ export function SchedulesAdminClient({
           ],
           templateRows: [
             {
-              subject_code: subjects[0]?.code ?? 'MATH-7',
+              subject_name: templateSubject?.name ?? 'Mathematics 7',
+              class_section: templateClass?.name ?? 'St. Augustine',
               day_of_week: 'mon',
               start_time: '08:00',
               end_time: '09:00',
               room: 'Room 201',
             },
             {
-              subject_code: subjects[0]?.code ?? 'MATH-7',
+              subject_name: templateSubject?.name ?? 'Mathematics 7',
+              class_section: templateClass?.name ?? 'St. Augustine',
               day_of_week: 'wed',
               start_time: '08:00',
               end_time: '09:00',
@@ -226,19 +255,24 @@ export function SchedulesAdminClient({
             },
           ],
           validateRow: (row) => {
-            if (!row.subject_code) return 'Subject code is required';
+            if (!row.subject_name?.trim()) return 'subject_name is required';
+            if (!row.class_section?.trim())
+              return 'class_section is required';
             const day = row.day_of_week?.trim().toLowerCase();
-            if (!day || !['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(day)) {
-              return 'Day must be mon, tue, wed, thu, fri, sat, or sun';
+            if (
+              !day ||
+              !['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(day)
+            ) {
+              return 'day_of_week must be mon, tue, wed, thu, fri, sat, or sun';
             }
             if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(row.start_time ?? '')) {
-              return 'Start time must be HH:MM (24h)';
+              return 'start_time must be HH:MM (24h)';
             }
             if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(row.end_time ?? '')) {
-              return 'End time must be HH:MM (24h)';
+              return 'end_time must be HH:MM (24h)';
             }
             if ((row.start_time ?? '') >= (row.end_time ?? '')) {
-              return 'End time must be after start time';
+              return 'end_time must be after start_time';
             }
             return null;
           },

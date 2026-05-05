@@ -4,13 +4,17 @@ import { requireRole } from '@/services/auth.service';
 import { createSubject } from '@/services/subject.service';
 import { listClasses } from '@/services/class.service';
 import { listUsersByRole } from '@/services/user.service';
+import {
+  resolveClassFromList,
+  resolveFacultyFromList,
+  formatResolutionError,
+} from '@/services/resolver';
 
 interface ImportRow {
-  code?: string;
   name?: string;
+  class_section?: string;
+  faculty_name?: string;
   description?: string;
-  class_name?: string;
-  faculty_email?: string;
 }
 
 interface ImportRequest {
@@ -20,13 +24,11 @@ interface ImportRequest {
 /**
  * POST /api/subjects/import
  *
- * Like classes import: CSV references class by name (admin-friendly) and
- * faculty by email. We resolve both to IDs before creating subjects.
+ * CSV format (audit fixes #5, #6):
+ *   name, class_section, faculty_name, description
  *
- * Edge case handled: multiple classes can have the same name across grade
- * levels (e.g. "Section A" exists for grade 7 AND grade 8). When that
- * happens, the import errors on that row asking for clarification — admin
- * should use a more specific name or use the standard form to disambiguate.
+ * Replaces the previous (code, name, class_name, faculty_email) format.
+ * Audit fix #5: code field gone. Audit fix #6: faculty referenced by name.
  */
 export async function POST(request: Request) {
   try {
@@ -45,18 +47,6 @@ export async function POST(request: Request) {
       listUsersByRole('faculty'),
     ]);
 
-    const facultyByEmail = new Map(
-      faculty.map((f) => [f.email.toLowerCase(), f.uid])
-    );
-
-    // Group classes by lowercased name for ambiguity detection
-    const classesByName = new Map<string, typeof classes>();
-    for (const c of classes) {
-      const key = c.name.toLowerCase();
-      const existing = classesByName.get(key) ?? [];
-      classesByName.set(key, [...existing, c]);
-    }
-
     const errors: { row: number; message: string }[] = [];
     let created = 0;
 
@@ -65,42 +55,41 @@ export async function POST(request: Request) {
       const rowNumber = i + 2;
 
       try {
-        // Resolve class
-        const matches = classesByName.get(row.class_name?.trim().toLowerCase() ?? '');
-        if (!matches || matches.length === 0) {
-          throw new Error(`No class found with name "${row.class_name}"`);
+        if (!row.class_section?.trim()) {
+          throw new Error('class_section is required');
         }
-        if (matches.length > 1) {
+        const classResult = resolveClassFromList(row.class_section, classes);
+        if (!classResult.ok) {
           throw new Error(
-            `Class name "${row.class_name}" is ambiguous (matches ${matches.length} classes). Use a unique name or create via form.`
+            formatResolutionError(row.class_section, classResult, 'classes')
           );
         }
-        const classId = matches[0].id;
 
-        // Resolve faculty
-        const facultyId = facultyByEmail.get(
-          row.faculty_email?.trim().toLowerCase() ?? ''
-        );
-        if (!facultyId) {
-          throw new Error(`No faculty with email "${row.faculty_email}"`);
+        if (!row.faculty_name?.trim()) {
+          throw new Error('faculty_name is required');
+        }
+        const facultyResult = resolveFacultyFromList(row.faculty_name, faculty);
+        if (!facultyResult.ok) {
+          throw new Error(
+            formatResolutionError(row.faculty_name, facultyResult, 'faculty')
+          );
         }
 
-        const input: Record<string, unknown> = {
-          code: row.code?.trim(),
-          name: row.name?.trim(),
-          classId,
-          facultyId,
-        };
-        if (row.description?.trim()) input.description = row.description.trim();
-
-        await createSubject(input);
+        await createSubject({
+          name: row.name,
+          classId: classResult.record.id,
+          facultyId: facultyResult.record.uid,
+          description: row.description,
+        });
         created++;
       } catch (err) {
         errors.push({
           row: rowNumber,
           message:
             err instanceof ZodError
-              ? err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
+              ? err.issues
+                  .map((i) => `${i.path.join('.')}: ${i.message}`)
+                  .join('; ')
               : err instanceof Error
                 ? err.message
                 : 'Unknown error',
@@ -115,12 +104,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ created, failed: errors.length, errors });
   } catch (error) {
     if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
     if (error instanceof Error && error.message === 'FORBIDDEN') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
     }
     console.error('[POST /api/subjects/import]', error);
-    return NextResponse.json({ error: 'Failed to import subjects' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to import subjects' },
+      { status: 500 }
+    );
   }
 }

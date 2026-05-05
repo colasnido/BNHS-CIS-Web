@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { updateSchedule, deleteSchedule } from '@/services/schedule.service';
+import { ScheduleConflictError } from '@/services/scheduling.validator';
 import { requireRole } from '@/services/auth.service';
 
 interface RouteContext {
@@ -37,17 +38,47 @@ function handleError(error: unknown, action: string) {
     return NextResponse.json(
       {
         error: 'Validation failed',
-        issues: error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+        issues: error.issues.map((i) => ({
+          path: i.path.join('.'),
+          message: i.message,
+        })),
       },
       { status: 400 }
     );
   }
+  if (error instanceof ScheduleConflictError) {
+    return NextResponse.json(
+      {
+        error: 'Schedule conflict',
+        conflicts: error.conflicts,
+      },
+      { status: 409 }
+    );
+  }
   if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    );
   }
   if (error instanceof Error && error.message === 'FORBIDDEN') {
-    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Insufficient permissions' },
+      { status: 403 }
+    );
+  }
+  if (error instanceof Error) {
+    if (
+      error.message.includes('does not exist') ||
+      error.message.includes('not found') ||
+      error.message.includes('End time must be')
+    ) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
   }
   console.error(`[/api/schedules/:id] ${action}`, error);
-  return NextResponse.json({ error: `Failed to ${action} schedule` }, { status: 500 });
+  return NextResponse.json(
+    { error: `Failed to ${action} schedule` },
+    { status: 500 }
+  );
 }

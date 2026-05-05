@@ -119,11 +119,7 @@ export function ScheduleGrid({
                         <p className="mt-1 text-sm font-medium text-slate-900">
                           {subject?.name ?? 'Unknown subject'}
                         </p>
-                        {subject?.code && (
-                          <p className="text-[11px] font-mono text-slate-500">
-                            {subject.code}
-                          </p>
-                        )}
+                        {/* Audit fix #5: subject.code removed */}
                         {secondaryLabel === 'teacher' && teacher && (
                           <p className="mt-1 text-xs text-slate-600">
                             {teacher.displayName}

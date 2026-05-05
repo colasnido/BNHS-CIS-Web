@@ -22,7 +22,7 @@ export default async function EditSubjectPage({ params }: PageProps) {
 
   return (
     <>
-      <DashboardPageHeader title="Edit subject" description={`${subject.code} · ${subject.name}`} />
+      <DashboardPageHeader title="Edit subject" description={subject.name} />
       <div className="p-6 sm:p-8">
         <div className="mx-auto max-w-3xl border border-slate-200 bg-white p-6 sm:p-8">
           <SubjectForm subject={subject} classes={classes} faculty={faculty} />

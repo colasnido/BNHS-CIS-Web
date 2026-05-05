@@ -3,14 +3,17 @@ import { ZodError } from 'zod';
 import { requireRole } from '@/services/auth.service';
 import { createClass } from '@/services/class.service';
 import { listUsersByRole } from '@/services/user.service';
+import {
+  resolveFacultyFromList,
+  formatResolutionError,
+} from '@/services/resolver';
 
 interface ImportRow {
   name?: string;
   grade_level?: string;
   section?: string;
   school_year?: string;
-  /** Adviser is referenced by email (admin-friendly), not UID */
-  adviser_email?: string;
+  adviser_name?: string;
 }
 
 interface ImportRequest {
@@ -20,10 +23,11 @@ interface ImportRequest {
 /**
  * POST /api/classes/import
  *
- * Notable: the CSV uses adviser_email (not adviser_id) because admins paste
- * data from spreadsheets where they've typed faculty emails, not opaque
- * Firestore UIDs. We resolve email → UID server-side once at the start of
- * the import.
+ * CSV format (audit fix #6):
+ *   name, grade_level, section, school_year, adviser_name
+ *
+ * Replaces the previous adviser_email column. The resolver supports partial
+ * names (e.g. "Cruz" matches "Jose Cruz" if unambiguous).
  */
 export async function POST(request: Request) {
   try {
@@ -37,11 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // One-time lookup: build email → UID map for adviser resolution
     const faculty = await listUsersByRole('faculty');
-    const facultyByEmail = new Map(
-      faculty.map((f) => [f.email.toLowerCase(), f.uid])
-    );
 
     const errors: { row: number; message: string }[] = [];
     let created = 0;
@@ -52,20 +52,21 @@ export async function POST(request: Request) {
 
       try {
         const input: Record<string, unknown> = {
-          name: row.name?.trim(),
+          name: row.name,
           gradeLevel: Number(row.grade_level),
-          section: row.section?.trim(),
-          schoolYear: row.school_year?.trim(),
+          section: row.section,
+          schoolYear: row.school_year,
         };
 
-        if (row.adviser_email?.trim()) {
-          const uid = facultyByEmail.get(row.adviser_email.trim().toLowerCase());
-          if (!uid) {
+        // Adviser is optional. If provided, resolve by name.
+        if (row.adviser_name?.trim()) {
+          const result = resolveFacultyFromList(row.adviser_name, faculty);
+          if (!result.ok) {
             throw new Error(
-              `No faculty found with email "${row.adviser_email.trim()}"`
+              formatResolutionError(row.adviser_name, result, 'faculty')
             );
           }
-          input.adviserId = uid;
+          input.adviserId = result.record.uid;
         }
 
         await createClass(input);
@@ -75,7 +76,9 @@ export async function POST(request: Request) {
           row: rowNumber,
           message:
             err instanceof ZodError
-              ? err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
+              ? err.issues
+                  .map((i) => `${i.path.join('.')}: ${i.message}`)
+                  .join('; ')
               : err instanceof Error
                 ? err.message
                 : 'Unknown error',
@@ -90,12 +93,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ created, failed: errors.length, errors });
   } catch (error) {
     if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
     if (error instanceof Error && error.message === 'FORBIDDEN') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      );
     }
     console.error('[POST /api/classes/import]', error);
-    return NextResponse.json({ error: 'Failed to import classes' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to import classes' },
+      { status: 500 }
+    );
   }
 }

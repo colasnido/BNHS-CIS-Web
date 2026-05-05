@@ -15,12 +15,22 @@ import type {
   UpdateUserInput,
   Role,
 } from '@/features/users/types';
+import {
+  normalizeEmail,
+  normalizePersonName,
+  normalizeShortText,
+  normalizeFreeText,
+} from '@/lib/normalize';
 
 /**
  * User service. Owns the users collection AND user-related Firebase Auth ops.
  *
- * The complication: a "user" in this app is BOTH a Firebase Auth account
- * AND a Firestore doc. Creating one means doing both atomically (best-effort).
+ * Audit fix #1 (normalization) applied at every write boundary:
+ *   - email lowercased (Firebase Auth treats them case-insensitively, but
+ *     our Firestore queries don't — we standardize)
+ *   - displayName trimmed and title-cased
+ *   - studentNumber trimmed
+ *   - department trimmed and whitespace-collapsed
  */
 
 function fromFirestore(
@@ -105,19 +115,11 @@ export async function getUser(uid: string): Promise<User | null> {
   }
 }
 
-/**
- * Create a user end-to-end:
- *   1. Create Firebase Auth account (email/password)
- *   2. Set custom claim for role
- *   3. Write Firestore profile doc
- *
- * If step 3 fails after step 1 succeeds, we delete the auth account so
- * we don't leave an orphan with no profile (best-effort rollback).
- */
 export async function createUser(input: unknown): Promise<User> {
-  const parsed: CreateUserInput = CreateUserSchema.parse(input);
+  const normalized = normalizeUserInput(input);
+  const parsed: CreateUserInput = CreateUserSchema.parse(normalized);
 
-  // 1. Firebase Auth user
+  // 1. Firebase Auth user. Email is already normalized.
   const authUser = await adminAuth.createUser({
     email: parsed.email,
     password: parsed.password,
@@ -125,7 +127,7 @@ export async function createUser(input: unknown): Promise<User> {
   });
 
   try {
-    // 2. Custom claim for role (server-side gate uses this)
+    // 2. Custom claim for role
     await adminAuth.setCustomUserClaims(authUser.uid, { role: parsed.role });
 
     // 3. Firestore profile doc
@@ -147,38 +149,87 @@ export async function createUser(input: unknown): Promise<User> {
     const created = await collections.users().doc(authUser.uid).get();
     return fromFirestore(created);
   } catch (error) {
-    // Rollback: delete the orphan auth account
     await adminAuth.deleteUser(authUser.uid).catch(() => undefined);
     throw error;
   }
 }
 
-/**
- * Update profile fields. If role changes, the custom claim is updated too.
- * The user must sign out + back in for the new claim to take effect.
- */
 export async function updateUser(
   uid: string,
   input: unknown
 ): Promise<User> {
-  const parsed: UpdateUserInput = UpdateUserSchema.parse(input);
+  const normalized = normalizeUserInput(input);
+  const parsed: UpdateUserInput = UpdateUserSchema.parse(normalized);
 
   if (parsed.role) {
     await adminAuth.setCustomUserClaims(uid, { role: parsed.role });
   }
 
+  // If displayName or email is changing, also update the Firebase Auth record
+  // so the two sides stay in sync. (Otherwise admin renames a user in our DB
+  // but Auth still shows the old name.)
+  const authUpdate: { email?: string; displayName?: string } = {};
+  if (parsed.email !== undefined) authUpdate.email = parsed.email;
+  if (parsed.displayName !== undefined)
+    authUpdate.displayName = parsed.displayName;
+  if (Object.keys(authUpdate).length > 0) {
+    await adminAuth.updateUser(uid, authUpdate);
+  }
+
   const updates = buildUpdate(parsed);
-  // Convert nulls to FieldValue.delete? Keep simple: nulls clear fields by being stored as null.
   await collections.users().doc(uid).update(updates);
 
   const updated = await collections.users().doc(uid).get();
   return fromFirestore(updated);
 }
 
-/**
- * Delete: remove from Firestore AND Firebase Auth.
- */
 export async function deleteUser(uid: string): Promise<void> {
   await collections.users().doc(uid).delete();
   await adminAuth.deleteUser(uid).catch(() => undefined);
+}
+
+/**
+ * Normalize incoming user input. Applied to both create and update paths.
+ *
+ * For nullable fields (classId, studentNumber, etc.), an explicit `null`
+ * passes through — that's how the update path expresses "clear this field".
+ */
+function normalizeUserInput(input: unknown): unknown {
+  if (typeof input !== 'object' || input === null) return input;
+  const obj = input as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...obj };
+
+  if (typeof obj.email === 'string') {
+    out.email = normalizeEmail(obj.email);
+  }
+  if (typeof obj.displayName === 'string') {
+    out.displayName = normalizePersonName(obj.displayName);
+  }
+  if (typeof obj.studentNumber === 'string') {
+    const cleaned = normalizeShortText(obj.studentNumber);
+    if (cleaned === '') {
+      delete out.studentNumber;
+    } else {
+      out.studentNumber = cleaned;
+    }
+  }
+  if (typeof obj.department === 'string') {
+    const cleaned = normalizeFreeText(obj.department);
+    if (cleaned === '') {
+      delete out.department;
+    } else {
+      out.department = cleaned;
+    }
+  }
+  if (typeof obj.classId === 'string') {
+    const cleaned = normalizeShortText(obj.classId);
+    if (cleaned === '') {
+      // Empty classId from form → drop, otherwise schema rejects.
+      // Caller can use null to explicitly clear.
+      delete out.classId;
+    } else {
+      out.classId = cleaned;
+    }
+  }
+  return out;
 }
