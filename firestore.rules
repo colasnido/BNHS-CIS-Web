@@ -1,0 +1,132 @@
+rules_version = '2';
+
+// ============================================================================
+// Firestore Security Rules — Badiang National High School
+// ============================================================================
+//
+// CRITICAL: These rules run in addition to your server-side checks. The Next.js
+// server-side code (services/*.service.ts) uses the Admin SDK which BYPASSES
+// these rules. So why have them?
+//
+// Answer: the Firebase CLIENT SDK (used by browser code) talks DIRECTLY to
+// Firestore, bypassing your Next.js API routes entirely. Without rules, a
+// random visitor can open the browser console on your site and write
+// anything they want. These rules are the ONLY thing stopping that.
+//
+// Default stance: deny everything. Explicitly allow what's safe.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper functions
+    // ------------------------------------------------------------------------
+
+    // Is the request authenticated?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Does the user have a specific role? Roles come from Firebase Auth
+    // custom claims, set server-side via auth.service.ts.
+    function hasRole(role) {
+      return isSignedIn() && request.auth.token.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isFaculty() {
+      return hasRole('faculty');
+    }
+
+    function isStudent() {
+      return hasRole('student');
+    }
+
+    // Is the user reading their OWN document?
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ------------------------------------------------------------------------
+    // ANNOUNCEMENTS — public read, admin/faculty write
+    // ------------------------------------------------------------------------
+    // Visitors can see announcements on the public site without logging in.
+    // Only admins and faculty can create/edit/delete.
+    match /announcements/{id} {
+      // Anyone can read PUBLISHED announcements. Drafts (published=false)
+      // are admin/faculty only.
+      allow read: if resource.data.published == true
+                  || isAdmin()
+                  || isFaculty();
+      allow write: if isAdmin() || isFaculty();
+    }
+
+    // ------------------------------------------------------------------------
+    // EVENTS — public read, admin/faculty write
+    // ------------------------------------------------------------------------
+    match /events/{id} {
+      allow read: if resource.data.published == true
+                  || isAdmin()
+                  || isFaculty();
+      allow write: if isAdmin() || isFaculty();
+    }
+
+    // ------------------------------------------------------------------------
+    // USERS — admin write, owner read own
+    // ------------------------------------------------------------------------
+    // Students/faculty can read THEIR OWN profile but not others'.
+    // Only admin can create/update/delete user docs.
+    // (Note: server-side createUser also uses Admin SDK; these rules cover
+    // any direct client-SDK access that bypasses the API.)
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------------
+    // CLASSES — signed-in read, admin write
+    // ------------------------------------------------------------------------
+    // Any signed-in user (student/faculty/admin) can read class info.
+    // Only admin can modify.
+    match /classes/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------------
+    // SUBJECTS — signed-in read, admin write
+    // ------------------------------------------------------------------------
+    // Faculty need to see all subjects (to know what's offered).
+    // Students need to see subjects (for their schedule).
+    match /subjects/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------------
+    // SCHEDULES — signed-in read, admin write
+    // ------------------------------------------------------------------------
+    match /schedules/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------------------
+    // CATCH-ALL — deny everything else
+    // ------------------------------------------------------------------------
+    // If a new collection is added that doesn't have explicit rules, it
+    // defaults to NO access from the client SDK. Server-side Admin SDK
+    // still works (it bypasses these rules) — so the new collection is
+    // accessible from server code but locked down from browser code until
+    // you write rules for it.
+    //
+    // This is the safe default. Don't remove this catch-all.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

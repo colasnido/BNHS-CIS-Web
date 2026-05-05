@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ============================================================================
+# Dependencies
+# ============================================================================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +12,101 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# ============================================================================
+# Testing
+# ============================================================================
 /coverage
 
-# next.js
+# ============================================================================
+# Next.js build artifacts
+# ============================================================================
 /.next/
 /out/
-
-# production
 /build
 
-# misc
+# ============================================================================
+# Misc
+# ============================================================================
 .DS_Store
 *.pem
+Thumbs.db
+desktop.ini
 
-# debug
+# ============================================================================
+# Debug logs
+# ============================================================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# ============================================================================
+# Environment files — NEVER COMMIT
+# ============================================================================
+# Catches .env, .env.local, .env.production, .env.development.local, etc.
+.env
 .env*
+!.env.example
+!.env.template
 
-# vercel
+# ============================================================================
+# Service account JSONs — NEVER COMMIT
+# ============================================================================
+# Common patterns for accidentally-downloaded service account keys.
+# Anyone with this file has full admin access to your Firebase project.
+*-service-account*.json
+*service-account*.json
+firebase-adminsdk-*.json
+serviceAccountKey.json
+google-credentials.json
+gcp-credentials.json
+
+# ============================================================================
+# Firebase local files
+# ============================================================================
+# These can contain real production data if you've ever pulled it down
+# locally for debugging.
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+.firebaserc.local
+
+# ============================================================================
+# Vercel
+# ============================================================================
 .vercel
 
-# typescript
+# ============================================================================
+# TypeScript
+# ============================================================================
 *.tsbuildinfo
 next-env.d.ts
+
+# ============================================================================
+# IDE / editor files (may contain hardcoded paths or credentials)
+# ============================================================================
+.idea/
+.vscode/launch.json
+.vscode/settings.json
+*.swp
+*.swo
+
+# ============================================================================
+# Backup files
+# ============================================================================
+*.bak
+*.backup
+*.old
+*~
+
+# ============================================================================
+# Output zips and exports
+# ============================================================================
+# In case you ever zip up your src for sharing, this prevents it from
+# being committed alongside the code.
+*.zip
+*.tar.gz
+src.zip
+src_and_scripts.zip
+ai_review*.zip

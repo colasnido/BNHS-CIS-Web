@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// ============================================================================
+// Firebase Storage Rules — Badiang National High School
+// ============================================================================
+//
+// Same model as Firestore: the Admin SDK bypasses these rules, so server-side
+// uploads always work. These rules govern direct browser-to-Storage access.
+//
+// Without rules, anyone can upload arbitrary files to your bucket — and
+// you pay for the storage AND egress.
+// ============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isFaculty() {
+      return isSignedIn() && request.auth.token.role == 'faculty';
+    }
+
+    // File size guard. 10 MB max — generous for photos, blocks accidental
+    // (or malicious) huge uploads.
+    function isUnderSizeLimit() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // MIME type guard. Only image and PDF for school media.
+    // (Add types here if you legitimately need them — videos, etc.)
+    function isAllowedType() {
+      return request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf';
+    }
+
+    // ------------------------------------------------------------------------
+    // /media/* — public photos for announcements, events, gallery
+    // ------------------------------------------------------------------------
+    match /media/{allPaths=**} {
+      allow read: if true; // public site, public images
+      allow write: if (isAdmin() || isFaculty())
+                   && isUnderSizeLimit()
+                   && isAllowedType();
+    }
+
+    // ------------------------------------------------------------------------
+    // /profiles/{uid} — user profile pictures
+    // ------------------------------------------------------------------------
+    // User can upload their own. Admin can upload anyone's. Public read so
+    // pictures show up on user-facing pages.
+    match /profiles/{uid}/{allPaths=**} {
+      allow read: if true;
+      allow write: if (isSignedIn() && request.auth.uid == uid || isAdmin())
+                   && isUnderSizeLimit()
+                   && isAllowedType();
+    }
+
+    // ------------------------------------------------------------------------
+    // Catch-all — deny
+    // ------------------------------------------------------------------------
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
