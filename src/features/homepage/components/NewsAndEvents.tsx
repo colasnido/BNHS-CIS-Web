@@ -1,19 +1,19 @@
-import Link from 'next/link';
-import { ROUTES } from '@/constants/routes';
-import { Container } from '@/components/ui/Container';
-import { listUpcomingEvents } from '@/services/event.service';
-import { listRecentAnnouncements } from '@/services/announcement.service';
-import { AnnouncementList } from '@/features/announcements/components/AnnouncementList';
+import Link from "next/link";
+import { ROUTES } from "@/constants/routes";
+import { Container } from "@/components/ui/Container";
+import { listUpcomingEvents } from "@/services/event.service";
+import { listRecentAnnouncements } from "@/services/announcement.service";
+import { AnnouncementList } from "@/features/announcements/components/AnnouncementList";
 
 function formatEventDateParts(isoDate: string) {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) {
-    return { month: 'TBD', day: '--' };
+    return { month: "TBD", day: "--" };
   }
 
   return {
-    month: date.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
-    day: String(date.getDate()).padStart(2, '0'),
+    month: date.toLocaleString("en-US", { month: "short" }).toUpperCase(),
+    day: String(date.getDate()).padStart(2, "0"),
   };
 }
 
@@ -45,10 +45,14 @@ export async function NewsAndEvents() {
 
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Events */}
-            <div>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,31,58,0.05)]">
               <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
-                <h3 className="font-serif text-2xl font-semibold tracking-tight text-slate-900">
-                  Upcoming events
+                <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-[#c8a85c]"
+                  />
+                  <span>Upcoming events</span>
                 </h3>
                 <Link
                   href={ROUTES.EVENTS}
@@ -63,7 +67,7 @@ export async function NewsAndEvents() {
                   No upcoming events yet.
                 </div>
               ) : (
-                <ul className="mt-2 divide-y divide-slate-100">
+                <ul className="mt-4 -mx-3 divide-y divide-slate-100">
                   {upcomingEvents.map((event) => {
                     const dateParts = formatEventDateParts(event.startDate);
 
@@ -71,10 +75,10 @@ export async function NewsAndEvents() {
                       <li key={event.id}>
                         <Link
                           href={`/events/${event.id}`}
-                          className="group flex items-start gap-5 py-5 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
+                          className="group flex items-start gap-5 rounded-lg px-3 py-4 transition-colors ring-1 ring-transparent hover:bg-[#0f1f3a]/[0.06] hover:shadow-[0_6px_16px_rgba(15,31,58,0.08)] hover:ring-[#c8a85c]/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
                         >
                           {/* Date block — distinctive, scannable */}
-                          <div className="flex w-16 shrink-0 flex-col items-center border border-slate-200 bg-white px-2 py-2 text-center">
+                          <div className="flex w-16 shrink-0 flex-col items-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center transition-colors group-hover:border-[#c8a85c]/60 group-hover:bg-[#c8a85c]/10">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8a85c]">
                               {dateParts.month}
                             </span>
@@ -107,10 +111,14 @@ export async function NewsAndEvents() {
 
             {/* Announcements — uses AnnouncementCard compact variant which
                 now shows summary preview internally. */}
-            <div>
+            <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,31,58,0.05)]">
               <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
-                <h3 className="font-serif text-2xl font-semibold tracking-tight text-slate-900">
-                  Recent announcements
+                <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-[#c8a85c]"
+                  />
+                  <span>Recent announcements</span>
                 </h3>
                 <Link
                   href={ROUTES.ANNOUNCEMENTS}

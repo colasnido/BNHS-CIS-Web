@@ -1,24 +1,24 @@
-import Link from 'next/link';
-import type { Announcement } from '../types';
+import Link from "next/link";
+import type { Announcement } from "../types";
 
 interface AnnouncementCardProps {
   announcement: Announcement;
-  variant?: 'compact' | 'detailed';
+  variant?: "compact" | "detailed";
 }
 
-const priorityStyles: Record<Announcement['priority'], string> = {
-  high: 'bg-rose-50 text-rose-700 border-rose-200',
-  medium: 'bg-amber-50 text-amber-700 border-amber-200',
-  low: 'bg-slate-50 text-slate-700 border-slate-200',
+const priorityStyles: Record<Announcement["priority"], string> = {
+  high: "bg-rose-50 text-rose-700 border-rose-200",
+  medium: "bg-amber-50 text-amber-700 border-amber-200",
+  low: "bg-slate-50 text-slate-700 border-slate-200",
 };
 
 function formatDate(iso: string) {
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return 'Date TBD';
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  if (Number.isNaN(date.getTime())) return "Date TBD";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -36,20 +36,20 @@ function formatDate(iso: string) {
  */
 export function AnnouncementCard({
   announcement,
-  variant = 'detailed',
+  variant = "detailed",
 }: AnnouncementCardProps) {
   const dateLabel = formatDate(announcement.createdAt);
   const priorityClass =
     priorityStyles[announcement.priority] ?? priorityStyles.medium;
   const detailHref = `/announcements/${announcement.id}`;
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     // Used on the homepage's "Recent announcements" list. Tighter spacing,
     // no card chrome, summary clamped to 2 lines for density.
     return (
       <Link
         href={detailHref}
-        className="group block py-5 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
+        className="group block rounded-lg px-3 py-4 transition-colors ring-1 ring-transparent hover:bg-[#0f1f3a]/[0.06] hover:shadow-[0_6px_16px_rgba(15,31,58,0.08)] hover:ring-[#c8a85c]/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
       >
         <div className="flex items-center gap-3">
           <span

@@ -1,33 +1,36 @@
-import Link from 'next/link';
-import { ROUTES } from '@/constants/routes';
-import { Container } from '@/components/ui/Container';
+import Link from "next/link";
+import { ROUTES } from "@/constants/routes";
+import { Container } from "@/components/ui/Container";
 
 const links = [
   {
-    label: 'Admissions',
-    description: 'Enrollment requirements and application process',
+    label: "Admissions",
+    description: "Enrollment requirements and application process",
     href: ROUTES.ABOUT,
   },
   {
-    label: 'Academic Calendar',
-    description: 'Important dates, holidays, and schedules',
+    label: "Academic Calendar",
+    description: "Important dates, holidays, and schedules",
     href: ROUTES.EVENTS,
   },
   {
-    label: 'Announcements',
-    description: 'Latest news, advisories, and updates',
+    label: "Announcements",
+    description: "Latest news, advisories, and updates",
     href: ROUTES.ANNOUNCEMENTS,
   },
   {
-    label: 'School Gallery',
-    description: 'Photos and videos from school life',
+    label: "School Gallery",
+    description: "Photos and videos from school life",
     href: ROUTES.MEDIA,
   },
 ];
 
 export function QuickLinks() {
   return (
-    <section className="border-b border-slate-200 bg-slate-50" aria-labelledby="quick-links-heading">
+    <section
+      className="border-b border-slate-200 bg-slate-50"
+      aria-labelledby="quick-links-heading"
+    >
       <Container>
         <div className="py-12 sm:py-16">
           <div className="flex items-baseline justify-between">
@@ -37,7 +40,10 @@ export function QuickLinks() {
             >
               Quick access
             </h2>
-            <span aria-hidden="true" className="text-xs uppercase tracking-wider text-slate-500">
+            <span
+              aria-hidden="true"
+              className="text-xs uppercase tracking-wider text-slate-500"
+            >
               Jump to a section
             </span>
           </div>
@@ -47,7 +53,7 @@ export function QuickLinks() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="group flex h-full flex-col bg-white p-6 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
+                  className="group flex h-full flex-col bg-white p-6 transition-colors ring-1 ring-inset ring-transparent hover:bg-[#0f1f3a]/[0.02] hover:ring-[#c8a85c]/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
                 >
                   <span className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#0f1f3a]">
                     {link.label}

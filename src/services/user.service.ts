@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomInt } from "node:crypto";
+
 import { Timestamp } from "firebase-admin/firestore";
 import { adminAuth } from "@/services/firebase.admin";
 import { collections } from "@/services/firestore";
@@ -326,4 +328,40 @@ export async function changeUserPassword(
     mustChangePassword: false,
     updatedAt: Timestamp.now(),
   });
+}
+
+export async function resetUserPassword(uid: string): Promise<string> {
+  const tempPassword = generateTempPassword();
+
+  await adminAuth.updateUser(uid, { password: tempPassword });
+  await adminAuth.revokeRefreshTokens(uid);
+
+  await collections.users().doc(uid).update({
+    mustChangePassword: true,
+    updatedAt: Timestamp.now(),
+  });
+
+  return tempPassword;
+}
+
+function generateTempPassword(length = 12): string {
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const digits = "23456789";
+  const all = `${letters}${digits}`;
+
+  const chars = [
+    letters[randomInt(letters.length)],
+    digits[randomInt(digits.length)],
+  ];
+
+  for (let i = chars.length; i < length; i++) {
+    chars.push(all[randomInt(all.length)]);
+  }
+
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+
+  return chars.join("");
 }
