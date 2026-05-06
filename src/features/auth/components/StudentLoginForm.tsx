@@ -5,85 +5,76 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth } from '@/services/firebase.client';
-import type { Role } from '@/services/auth.service';
-
-interface LoginFormProps {
-  /** Which role this login page is for (admin or faculty — student uses a different form) */
-  role: Exclude<Role, 'student'>;
-  /** Where to redirect after successful sign-in (used only when no force-change) */
-  redirectTo: string;
-}
-
-const roleLabels: Record<
-  Exclude<Role, 'student'>,
-  { label: string; subtitle: string; color: string }
-> = {
-  admin: {
-    label: 'Administrator Login',
-    subtitle: 'Full access to dashboard and content management',
-    color: 'bg-rose-50 text-rose-700 border-rose-200',
-  },
-  faculty: {
-    label: 'Faculty Login',
-    subtitle: 'Manage events, announcements, and media',
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
-  },
-};
+import { studentIdToEmail } from '@/lib/student-id';
 
 /**
- * Shared login form for admin and faculty (email-based).
- * Students use StudentLoginForm (LRN-based) — different file.
+ * Student login form. Identifies students by their 12-digit LRN
+ * (Learner Reference Number) instead of email.
+ *
+ * Flow:
+ *   1. User enters LRN + password
+ *   2. Form derives synthetic email: {lrn}@students.bnhs.edu.ph
+ *   3. Calls Firebase Auth with the synthetic email
+ *   4. Verifies role is 'student' (defense-in-depth)
+ *   5. Posts ID token to /api/auth/session for HttpOnly cookie
+ *   6. If user has mustChangePassword flag set → redirects to /change-password
+ *      else → redirects to dashboard
+ *
+ * Step 6 detail: we don't decode the JWT to check mustChangePassword (it's
+ * not in claims). Instead we hit a small server endpoint that returns the
+ * user's first-login status from Firestore. One extra round-trip on login.
  */
-export function LoginForm({ role, redirectTo }: LoginFormProps) {
+export function StudentLoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const meta = roleLabels[role];
-
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setIsSubmitting(true);
 
+    // Client-side LRN format check — same regex as the server-side schema
+    const trimmed = studentId.trim();
+    if (!/^\d{12}$/.test(trimmed)) {
+      setError('Student number must be exactly 12 digits.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // 1. Sign in with Firebase
+      // 1. Derive synthetic email from LRN
+      const email = studentIdToEmail(trimmed);
+
+      // 2. Sign in with Firebase
       const credential = await signInWithEmailAndPassword(
         firebaseAuth,
         email,
         password
       );
 
-      // 2. Verify role
+      // 3. Verify role (force token refresh for fresh claims)
       const idTokenResult = await credential.user.getIdTokenResult(true);
-      const userRole = idTokenResult.claims.role as Role | undefined;
-
-      if (userRole !== role) {
+      if (idTokenResult.claims.role !== 'student') {
         await firebaseAuth.signOut();
-        const detail = userRole
-          ? `This account is registered as ${userRole}.`
-          : `This account does not have a role assigned yet.`;
         throw new Error(
-          `${detail} Please use the correct login page or ask an admin to assign your role.`
+          'This account is not registered as a student. Please use the correct login page.'
         );
       }
 
-      // 3. Exchange ID token for session cookie
+      // 4. Exchange ID token for HttpOnly session cookie
       const sessionRes = await fetch('/api/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: idTokenResult.token }),
       });
-
       if (!sessionRes.ok) {
         throw new Error('Failed to create session');
       }
 
-      // 4. Check mustChangePassword — faculty might have an admin-assigned
-      //    initial password. Admins typically don't (self-set), but the
-      //    check is harmless.
+      // 5. Check if user must change password before going to dashboard.
+      //    /api/auth/me returns the current user's mustChangePassword flag.
       const meRes = await fetch('/api/auth/me');
       if (meRes.ok) {
         const me: { mustChangePassword?: boolean } = await meRes.json();
@@ -94,8 +85,8 @@ export function LoginForm({ role, redirectTo }: LoginFormProps) {
         }
       }
 
-      // 5. Redirect to role's destination
-      router.push(redirectTo);
+      // 6. Normal flow — go to dashboard
+      router.push('/dashboard/student');
       router.refresh();
     } catch (err) {
       const raw =
@@ -106,13 +97,15 @@ export function LoginForm({ role, redirectTo }: LoginFormProps) {
               .trim()
           : 'Sign in failed';
 
+      // Generic message for credential errors — never reveal whether the
+      // LRN exists vs the password is wrong (prevents enumeration attacks).
       const isCredentialError =
         /invalid-credential|user-not-found|wrong-password|invalid-login/i.test(
           raw
         );
       setError(
         isCredentialError
-          ? 'Invalid email or password.'
+          ? 'Invalid student number or password.'
           : raw || 'Sign in failed'
       );
       setIsSubmitting(false);
@@ -122,15 +115,15 @@ export function LoginForm({ role, redirectTo }: LoginFormProps) {
   return (
     <div className="mx-auto w-full max-w-md">
       <div className="mb-8 text-center">
-        <span
-          className={`inline-block border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${meta.color}`}
-        >
-          {role}
+        <span className="inline-block border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
+          Student
         </span>
         <h1 className="mt-4 font-serif text-3xl font-semibold tracking-tight text-slate-900">
-          {meta.label}
+          Student Login
         </h1>
-        <p className="mt-2 text-sm text-slate-600">{meta.subtitle}</p>
+        <p className="mt-2 text-sm text-slate-600">
+          Sign in with your LRN (Learner Reference Number).
+        </p>
       </div>
 
       <form
@@ -154,21 +147,30 @@ export function LoginForm({ role, redirectTo }: LoginFormProps) {
         <div className="space-y-5">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="student-id"
               className="block text-sm font-medium text-slate-900"
             >
-              Email
+              Student Number (LRN)
             </label>
             <input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="student-id"
+              type="text"
+              inputMode="numeric"
+              autoComplete="username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 block w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-[#0f1f3a] focus:outline-2 focus:outline-offset-2 focus:outline-[#c8a85c]"
-              placeholder="you@bnhs.edu.ph"
+              maxLength={12}
+              value={studentId}
+              onChange={(e) =>
+                // Strip non-digits as user types — prevents accidental spaces
+                // or letters from being pasted in.
+                setStudentId(e.target.value.replace(/\D/g, ''))
+              }
+              className="mt-1.5 block w-full border border-slate-300 bg-white px-3 py-2.5 font-mono text-sm tracking-wider text-slate-900 placeholder-slate-400 focus:border-[#0f1f3a] focus:outline-2 focus:outline-offset-2 focus:outline-[#c8a85c]"
+              placeholder="117964180001"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              12 digits. Ask your adviser if you don&apos;t know your LRN.
+            </p>
           </div>
 
           <div>
@@ -201,9 +203,16 @@ export function LoginForm({ role, redirectTo }: LoginFormProps) {
       </form>
 
       <p className="mt-6 text-center text-sm text-slate-600">
-        Wrong page?{' '}
+        Faculty?{' '}
+        <Link
+          href="/auth/faculty"
+          className="font-medium text-[#0f1f3a] hover:underline"
+        >
+          Faculty login
+        </Link>
+        {' · '}
         <Link href="/" className="font-medium text-[#0f1f3a] hover:underline">
-          Return home
+          Home
         </Link>
       </p>
     </div>
