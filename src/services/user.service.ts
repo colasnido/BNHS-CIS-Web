@@ -1,26 +1,30 @@
-import 'server-only';
+import "server-only";
 
-import { Timestamp } from 'firebase-admin/firestore';
-import { adminAuth } from '@/services/firebase.admin';
-import { collections } from '@/services/firestore';
-import { toISO, buildUpdate, isNotFoundError } from '@/services/firestore.helpers';
+import { Timestamp } from "firebase-admin/firestore";
+import { adminAuth } from "@/services/firebase.admin";
+import { collections } from "@/services/firestore";
+import {
+  toISO,
+  buildUpdate,
+  isNotFoundError,
+} from "@/services/firestore.helpers";
 import {
   CreateUserSchema,
   UpdateUserSchema,
   RoleSchema,
-} from '@/features/users/schema';
+} from "@/features/users/schema";
 import type {
   User,
   CreateUserInput,
   UpdateUserInput,
   Role,
-} from '@/features/users/types';
+} from "@/features/users/types";
 import {
   normalizeEmail,
   normalizePersonName,
   normalizeShortText,
   normalizeFreeText,
-} from '@/lib/normalize';
+} from "@/lib/normalize";
 
 /**
  * User service. Owns the users collection AND user-related Firebase Auth ops.
@@ -36,7 +40,7 @@ import {
 function fromFirestore(
   doc:
     | FirebaseFirestore.QueryDocumentSnapshot
-    | FirebaseFirestore.DocumentSnapshot
+    | FirebaseFirestore.DocumentSnapshot,
 ): User {
   const data = doc.data();
   if (!data) throw new Error(`User ${doc.id} has no data`);
@@ -45,20 +49,21 @@ function fromFirestore(
   const updatedAt = toISO(data.updatedAt, createdAt);
   const role = RoleSchema.safeParse(data.role).success
     ? (data.role as Role)
-    : 'student';
+    : "student";
 
   return {
     uid: doc.id,
-    email: data.email ?? '',
-    displayName: data.displayName ?? data.email ?? 'Unnamed user',
+    email: data.email ?? "",
+    displayName: data.displayName ?? data.email ?? "Unnamed user",
     role,
-    photoUrl: typeof data.photoUrl === 'string' ? data.photoUrl : undefined,
-    classId: typeof data.classId === 'string' ? data.classId : undefined,
+    photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : undefined,
+    classId: typeof data.classId === "string" ? data.classId : undefined,
     studentNumber:
-      typeof data.studentNumber === 'string' ? data.studentNumber : undefined,
-    gradeLevel: typeof data.gradeLevel === 'number' ? data.gradeLevel : undefined,
+      typeof data.studentNumber === "string" ? data.studentNumber : undefined,
+    gradeLevel:
+      typeof data.gradeLevel === "number" ? data.gradeLevel : undefined,
     department:
-      typeof data.department === 'string' ? data.department : undefined,
+      typeof data.department === "string" ? data.department : undefined,
     createdAt,
     updatedAt,
   };
@@ -78,7 +83,7 @@ export async function listUsers(): Promise<User[]> {
 
 export async function listUsersByRole(role: Role): Promise<User[]> {
   try {
-    const snapshot = await collections.users().where('role', '==', role).get();
+    const snapshot = await collections.users().where("role", "==", role).get();
     return snapshot.docs
       .map(fromFirestore)
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
@@ -92,8 +97,8 @@ export async function listStudentsByClass(classId: string): Promise<User[]> {
   try {
     const snapshot = await collections
       .users()
-      .where('role', '==', 'student')
-      .where('classId', '==', classId)
+      .where("role", "==", "student")
+      .where("classId", "==", classId)
       .get();
     return snapshot.docs
       .map(fromFirestore)
@@ -154,10 +159,7 @@ export async function createUser(input: unknown): Promise<User> {
   }
 }
 
-export async function updateUser(
-  uid: string,
-  input: unknown
-): Promise<User> {
+export async function updateUser(uid: string, input: unknown): Promise<User> {
   const normalized = normalizeUserInput(input);
   const parsed: UpdateUserInput = UpdateUserSchema.parse(normalized);
 
@@ -165,11 +167,10 @@ export async function updateUser(
     await adminAuth.setCustomUserClaims(uid, { role: parsed.role });
   }
 
-  // If displayName or email is changing, also update the Firebase Auth record
-  // so the two sides stay in sync. (Otherwise admin renames a user in our DB
-  // but Auth still shows the old name.)
-  const authUpdate: { email?: string; displayName?: string } = {};
-  if (parsed.email !== undefined) authUpdate.email = parsed.email;
+  // If displayName is changing, also update the Firebase Auth record so the
+  // two sides stay in sync. (Otherwise admin renames a user in our DB but
+  // Auth still shows the old name.)
+  const authUpdate: { displayName?: string } = {};
   if (parsed.displayName !== undefined)
     authUpdate.displayName = parsed.displayName;
   if (Object.keys(authUpdate).length > 0) {
@@ -195,35 +196,35 @@ export async function deleteUser(uid: string): Promise<void> {
  * passes through — that's how the update path expresses "clear this field".
  */
 function normalizeUserInput(input: unknown): unknown {
-  if (typeof input !== 'object' || input === null) return input;
+  if (typeof input !== "object" || input === null) return input;
   const obj = input as Record<string, unknown>;
   const out: Record<string, unknown> = { ...obj };
 
-  if (typeof obj.email === 'string') {
+  if (typeof obj.email === "string") {
     out.email = normalizeEmail(obj.email);
   }
-  if (typeof obj.displayName === 'string') {
+  if (typeof obj.displayName === "string") {
     out.displayName = normalizePersonName(obj.displayName);
   }
-  if (typeof obj.studentNumber === 'string') {
+  if (typeof obj.studentNumber === "string") {
     const cleaned = normalizeShortText(obj.studentNumber);
-    if (cleaned === '') {
+    if (cleaned === "") {
       delete out.studentNumber;
     } else {
       out.studentNumber = cleaned;
     }
   }
-  if (typeof obj.department === 'string') {
+  if (typeof obj.department === "string") {
     const cleaned = normalizeFreeText(obj.department);
-    if (cleaned === '') {
+    if (cleaned === "") {
       delete out.department;
     } else {
       out.department = cleaned;
     }
   }
-  if (typeof obj.classId === 'string') {
+  if (typeof obj.classId === "string") {
     const cleaned = normalizeShortText(obj.classId);
-    if (cleaned === '') {
+    if (cleaned === "") {
       // Empty classId from form → drop, otherwise schema rejects.
       // Caller can use null to explicitly clear.
       delete out.classId;

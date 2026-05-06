@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
+import Link from "next/link";
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import {
   DataTable,
   DeleteAction,
   LinkAction,
   type Column,
   type BulkAction,
-} from '@/components/dashboard/DataTable';
-import type { Announcement } from '@/features/announcements/types';
+} from "@/components/dashboard/DataTable";
+import type { Announcement } from "@/features/announcements/types";
 
 interface AnnouncementsAdminClientProps {
   announcements: Announcement[];
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
 ];
 
 const priorityStyles: Record<string, string> = {
-  low: 'border-slate-200 bg-slate-50 text-slate-600',
-  medium: 'border-blue-200 bg-blue-50 text-blue-700',
-  high: 'border-rose-200 bg-rose-50 text-rose-700',
+  low: "border-slate-200 bg-slate-50 text-slate-600",
+  medium: "border-blue-200 bg-blue-50 text-blue-700",
+  high: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
 export function AnnouncementsAdminClient({
@@ -32,7 +32,7 @@ export function AnnouncementsAdminClient({
 }: AnnouncementsAdminClientProps) {
   const columns: Column<Announcement>[] = [
     {
-      header: 'Title',
+      header: "Title",
       cell: (a) => (
         <div>
           <p className="font-medium text-slate-900">{a.title}</p>
@@ -41,10 +41,10 @@ export function AnnouncementsAdminClient({
           </p>
         </div>
       ),
-      editable: { field: 'title', type: 'text' },
+      editable: { field: "title", type: "text" },
     },
     {
-      header: 'Priority',
+      header: "Priority",
       cell: (a) => (
         <span
           className={`inline-block rounded border px-2 py-0.5 text-xs font-medium capitalize ${priorityStyles[a.priority]}`}
@@ -53,14 +53,14 @@ export function AnnouncementsAdminClient({
         </span>
       ),
       editable: {
-        field: 'priority',
-        type: 'select',
+        field: "priority",
+        type: "select",
         options: PRIORITY_OPTIONS,
       },
       hideOnMobile: true,
     },
     {
-      header: 'Posted',
+      header: "Posted",
       cell: (a) => (
         <span className="text-slate-600">
           {new Date(a.createdAt).toLocaleDateString()}
@@ -69,16 +69,16 @@ export function AnnouncementsAdminClient({
       hideOnTablet: true,
     },
     {
-      header: 'Status',
+      header: "Status",
       cell: (a) => (
         <span
           className={`inline-block rounded border px-2 py-0.5 text-xs font-medium ${
             a.published
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-amber-200 bg-amber-50 text-amber-700'
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-amber-200 bg-amber-50 text-amber-700"
           }`}
         >
-          {a.published ? 'Published' : 'Draft'}
+          {a.published ? "Published" : "Draft"}
         </span>
       ),
     },
@@ -86,20 +86,20 @@ export function AnnouncementsAdminClient({
 
   const bulkActions: BulkAction[] = [
     {
-      label: 'Delete',
-      variant: 'destructive',
-      confirm: 'Delete {n} announcement(s)?',
+      label: "Delete",
+      variant: "destructive",
+      confirm: "Delete {n} announcement(s)?",
       onConfirm: async (ids) => {
         const results = await Promise.allSettled(
           ids.map((id) =>
-            fetch(`/api/announcements/${id}`, { method: 'DELETE' }).then(
+            fetch(`/api/announcements/${id}`, { method: "DELETE" }).then(
               (r) => {
-                if (!r.ok) throw new Error('Failed');
-              }
-            )
-          )
+                if (!r.ok) throw new Error("Failed");
+              },
+            ),
+          ),
         );
-        const failed = results.filter((r) => r.status === 'rejected').length;
+        const failed = results.filter((r) => r.status === "rejected").length;
         if (failed > 0) throw new Error(`${failed} could not be deleted`);
       },
     },
@@ -114,8 +114,18 @@ export function AnnouncementsAdminClient({
             href="/dashboard/admin/announcements/new"
             className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             New announcement
           </Link>
@@ -130,12 +140,17 @@ export function AnnouncementsAdminClient({
           searchPlaceholder="Search announcements..."
           filters={[
             {
-              key: 'priority',
-              label: 'Priority',
+              key: "priority",
+              label: "Priority",
               options: PRIORITY_OPTIONS,
             },
           ]}
-          filterAccessor={(a, key) => (a as Record<string, string>)[key] ?? ''}
+          filterAccessor={(a, key) => {
+            const val = (a as Record<string, unknown>)[key];
+            if (typeof val === "string") return val;
+            if (val == null) return "";
+            return String(val);
+          }}
           columns={columns}
           bulkActions={bulkActions}
           getEditEndpoint={(a) => `/api/announcements/${a.id}`}

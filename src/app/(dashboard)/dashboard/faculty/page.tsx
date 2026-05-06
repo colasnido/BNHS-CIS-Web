@@ -1,32 +1,32 @@
-import Link from 'next/link';
-import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
-import { requirePageRole } from '@/services/auth.guards';
-import { getUser } from '@/services/user.service';
-import { listSchedulesByFaculty } from '@/services/schedule.service';
-import { listSubjectsByFaculty } from '@/services/subject.service';
-import { listClassesByAdviser } from '@/services/class.service';
-import { listAnnouncements } from '@/services/announcement.service';
-import { listEvents } from '@/services/event.service';
-import type { DayOfWeek } from '@/features/schedules/types';
+import Link from "next/link";
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { requirePageRole } from "@/services/auth.guards";
+import { getUser } from "@/services/user.service";
+import { listSchedulesByFaculty } from "@/services/schedule.service";
+import { listSubjectsByFaculty } from "@/services/subject.service";
+import { listClassesByAdviser } from "@/services/class.service";
+import { listAnnouncements } from "@/services/announcement.service";
+import { listEvents } from "@/services/event.service";
+import type { DayOfWeek } from "@/features/schedules/types";
 
-export const metadata = { title: 'Overview' };
-export const dynamic = 'force-dynamic';
+export const metadata = { title: "Overview" };
+export const dynamic = "force-dynamic";
 
-const DAY_KEYS: DayOfWeek[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const DAY_KEYS: DayOfWeek[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const DAY_LABELS: Record<DayOfWeek, string> = {
-  mon: 'Monday',
-  tue: 'Tuesday',
-  wed: 'Wednesday',
-  thu: 'Thursday',
-  fri: 'Friday',
-  sat: 'Saturday',
-  sun: 'Sunday',
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
 };
 
 export default async function FacultyOverviewPage() {
-  const auth = await requirePageRole(['faculty']);
+  const auth = await requirePageRole(["faculty"]);
   const profile = await getUser(auth.uid);
-  const firstName = profile?.displayName?.split(' ')[0] ?? '';
+  const firstName = profile?.displayName?.split(" ")[0] ?? "";
 
   const today = DAY_KEYS[new Date().getDay()];
   const todayLabel = DAY_LABELS[today];
@@ -50,21 +50,21 @@ export default async function FacultyOverviewPage() {
     .filter((a) => a.published)
     .slice(0, 3)
     .map((a) => ({
-      type: 'announcement' as const,
+      type: "announcement" as const,
       id: a.id,
       title: a.title,
       date: a.createdAt,
-      detail: a.priority === 'high' ? 'Important' : '',
+      detail: a.priority === "high" ? "Important" : "",
     }));
   const upcomingEvents = events
     .filter((e) => e.published && new Date(e.startDate) >= new Date())
     .sort(
       (a, b) =>
-        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
     )
     .slice(0, 3)
     .map((e) => ({
-      type: 'event' as const,
+      type: "event" as const,
       id: e.id,
       title: e.title,
       date: e.startDate,
@@ -76,9 +76,7 @@ export default async function FacultyOverviewPage() {
 
   return (
     <>
-      <DashboardPageHeader
-        title={firstName ? `Hi, ${firstName}` : 'Today'}
-      />
+      <DashboardPageHeader title={firstName ? `Hi, ${firstName}` : "Today"} />
 
       <div className="space-y-6 px-4 pb-10 sm:px-6">
         {/* SECTION 1 — Today's classes */}
@@ -121,13 +119,12 @@ export default async function FacultyOverviewPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900">
-                        {subj?.name ?? 'Unknown subject'}
+                        {subj?.name ?? "Unknown subject"}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {subj?.code}
                         {s.room && (
                           <>
-                            {' '}
+                            {" "}
                             · <span>{s.room}</span>
                           </>
                         )}
@@ -156,7 +153,7 @@ export default async function FacultyOverviewPage() {
                   href="/dashboard/faculty/subjects"
                   className="hover:text-blue-700"
                 >
-                  {subjects.length} subject{subjects.length === 1 ? '' : 's'} →
+                  {subjects.length} subject{subjects.length === 1 ? "" : "s"} →
                 </Link>
               </dd>
             </div>
@@ -164,7 +161,7 @@ export default async function FacultyOverviewPage() {
               <dt className="text-xs text-slate-500">Classes you teach</dt>
               <dd className="mt-0.5 text-sm font-medium text-slate-900">
                 {new Set(subjects.map((s) => s.classId)).size} class
-                {new Set(subjects.map((s) => s.classId)).size === 1 ? '' : 'es'}
+                {new Set(subjects.map((s) => s.classId)).size === 1 ? "" : "es"}
               </dd>
             </div>
             <div>
@@ -207,12 +204,12 @@ export default async function FacultyOverviewPage() {
                   <div className="flex items-start gap-3">
                     <span
                       className={`mt-0.5 inline-block rounded border px-2 py-0.5 text-[11px] font-medium ${
-                        item.type === 'event'
-                          ? 'border-blue-200 bg-blue-50 text-blue-700'
-                          : 'border-slate-200 bg-slate-50 text-slate-600'
+                        item.type === "event"
+                          ? "border-blue-200 bg-blue-50 text-blue-700"
+                          : "border-slate-200 bg-slate-50 text-slate-600"
                       }`}
                     >
-                      {item.type === 'event' ? 'Event' : 'News'}
+                      {item.type === "event" ? "Event" : "News"}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-900">
