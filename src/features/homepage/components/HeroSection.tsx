@@ -1,14 +1,48 @@
-import Link from "next/link";
-import { ROUTES } from "@/constants/routes";
+import Link from 'next/link';
+import { ROUTES } from '@/constants/routes';
+import { countUsersByRole } from '@/services/user.service';
 
-const stats = [
-  { value: "381", label: "Students enrolled" },
-  { value: "19", label: "Faculty & staff" },
-  { value: "82%", label: "College acceptance" },
-  { value: "20+", label: "Clubs & programs" },
-];
+/**
+ * Format an integer for display in the hero stats card.
+ *
+ * Real counts get the actual number; if a count is 0 (e.g., empty Firestore
+ * during initial setup, or the count call failed and returned 0), we still
+ * show "0" rather than hiding the stat — predictable layout > clever empty
+ * states for an institutional homepage.
+ *
+ * For larger numbers, en-US grouping makes "1,234" instead of "1234".
+ */
+function formatCount(n: number): string {
+  return n.toLocaleString('en-US');
+}
 
-export function HeroSection() {
+/**
+ * HeroSection — public homepage hero with school name, intro, and at-a-glance
+ * stats. Now an async server component so it can fetch real student/faculty
+ * counts from Firestore on each (cached) render.
+ *
+ * Caching: the homepage uses `export const revalidate = 60` so this whole
+ * component is regenerated at most once per minute. We don't add an
+ * additional cache layer here.
+ *
+ * Two stats stay static per design decision:
+ *   - College acceptance: a long-running statistic, not stored anywhere
+ *   - Clubs & programs: no clubs collection in the database
+ */
+export async function HeroSection() {
+  // Run the two count queries in parallel — they're independent.
+  const [studentCount, facultyCount] = await Promise.all([
+    countUsersByRole('student'),
+    countUsersByRole('faculty'),
+  ]);
+
+  const stats = [
+    { value: formatCount(studentCount), label: 'Students enrolled' },
+    { value: formatCount(facultyCount), label: 'Faculty & staff' },
+    { value: '82%', label: 'College acceptance' }, // static — long-running stat
+    { value: '20+', label: 'Clubs & programs' },   // static — no club data source
+  ];
+
   return (
     <section
       className="relative overflow-hidden bg-[#0f1f3a] text-white"

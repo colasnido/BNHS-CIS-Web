@@ -1,32 +1,32 @@
-import 'server-only';
+import "server-only";
 
-import { Timestamp } from 'firebase-admin/firestore';
-import { adminAuth } from '@/services/firebase.admin';
-import { collections } from '@/services/firestore';
+import { Timestamp } from "firebase-admin/firestore";
+import { adminAuth } from "@/services/firebase.admin";
+import { collections } from "@/services/firestore";
 import {
   toISO,
   buildUpdate,
   isNotFoundError,
-} from '@/services/firestore.helpers';
+} from "@/services/firestore.helpers";
 import {
   CreateUserSchema,
   UpdateUserSchema,
   RoleSchema,
   StudentNumberSchema,
-} from '@/features/users/schema';
+} from "@/features/users/schema";
 import type {
   User,
   CreateUserInput,
   UpdateUserInput,
   Role,
-} from '@/features/users/types';
-import { studentIdToEmail } from '@/lib/student-id';
+} from "@/features/users/types";
+import { studentIdToEmail } from "@/lib/student-id";
 import {
   normalizeEmail,
   normalizePersonName,
   normalizeShortText,
   normalizeFreeText,
-} from '@/lib/normalize';
+} from "@/lib/normalize";
 
 /**
  * User service. Owns the users collection AND user-related Firebase Auth ops.
@@ -39,7 +39,7 @@ import {
 function fromFirestore(
   doc:
     | FirebaseFirestore.QueryDocumentSnapshot
-    | FirebaseFirestore.DocumentSnapshot
+    | FirebaseFirestore.DocumentSnapshot,
 ): User {
   const data = doc.data();
   if (!data) throw new Error(`User ${doc.id} has no data`);
@@ -48,21 +48,21 @@ function fromFirestore(
   const updatedAt = toISO(data.updatedAt, createdAt);
   const role = RoleSchema.safeParse(data.role).success
     ? (data.role as Role)
-    : 'student';
+    : "student";
 
   return {
     uid: doc.id,
-    email: data.email ?? '',
-    displayName: data.displayName ?? data.email ?? 'Unnamed user',
+    email: data.email ?? "",
+    displayName: data.displayName ?? data.email ?? "Unnamed user",
     role,
-    photoUrl: typeof data.photoUrl === 'string' ? data.photoUrl : undefined,
-    classId: typeof data.classId === 'string' ? data.classId : undefined,
+    photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : undefined,
+    classId: typeof data.classId === "string" ? data.classId : undefined,
     studentNumber:
-      typeof data.studentNumber === 'string' ? data.studentNumber : undefined,
+      typeof data.studentNumber === "string" ? data.studentNumber : undefined,
     gradeLevel:
-      typeof data.gradeLevel === 'number' ? data.gradeLevel : undefined,
+      typeof data.gradeLevel === "number" ? data.gradeLevel : undefined,
     department:
-      typeof data.department === 'string' ? data.department : undefined,
+      typeof data.department === "string" ? data.department : undefined,
     // Default false — accounts created before this field existed don't have
     // it stored, but we treat them as already-changed (grandfathering).
     mustChangePassword: data.mustChangePassword === true,
@@ -85,10 +85,7 @@ export async function listUsers(): Promise<User[]> {
 
 export async function listUsersByRole(role: Role): Promise<User[]> {
   try {
-    const snapshot = await collections
-      .users()
-      .where('role', '==', role)
-      .get();
+    const snapshot = await collections.users().where("role", "==", role).get();
     return snapshot.docs
       .map(fromFirestore)
       .sort((a, b) => a.displayName.localeCompare(b.displayName));
@@ -98,12 +95,22 @@ export async function listUsersByRole(role: Role): Promise<User[]> {
   }
 }
 
+export async function countUsersByRole(role: Role): Promise<number> {
+  try {
+    const snapshot = await collections.users().where("role", "==", role).get();
+    return snapshot.size;
+  } catch (error) {
+    if (isNotFoundError(error)) return 0;
+    throw error;
+  }
+}
+
 export async function listStudentsByClass(classId: string): Promise<User[]> {
   try {
     const snapshot = await collections
       .users()
-      .where('role', '==', 'student')
-      .where('classId', '==', classId)
+      .where("role", "==", "student")
+      .where("classId", "==", classId)
       .get();
     return snapshot.docs
       .map(fromFirestore)
@@ -130,13 +137,13 @@ export async function getUser(uid: string): Promise<User | null> {
  * the LRN exists before attempting Firebase Auth.
  */
 export async function getStudentByNumber(
-  studentNumber: string
+  studentNumber: string,
 ): Promise<User | null> {
   try {
     const snapshot = await collections
       .users()
-      .where('studentNumber', '==', studentNumber)
-      .where('role', '==', 'student')
+      .where("studentNumber", "==", studentNumber)
+      .where("role", "==", "student")
       .limit(1)
       .get();
     if (snapshot.empty) return null;
@@ -171,7 +178,7 @@ export async function createUser(input: unknown): Promise<User> {
   let displayName: string;
   const docFields: Record<string, unknown> = {};
 
-  if (parsed.role === 'student') {
+  if (parsed.role === "student") {
     const lrn = parsed.studentNumber.trim();
     StudentNumberSchema.parse(lrn); // double-check after trim
 
@@ -185,8 +192,9 @@ export async function createUser(input: unknown): Promise<User> {
     displayName = normalizePersonName(parsed.displayName);
     docFields.studentNumber = lrn;
     if (parsed.classId) docFields.classId = parsed.classId;
-    if (parsed.gradeLevel !== undefined) docFields.gradeLevel = parsed.gradeLevel;
-  } else if (parsed.role === 'faculty') {
+    if (parsed.gradeLevel !== undefined)
+      docFields.gradeLevel = parsed.gradeLevel;
+  } else if (parsed.role === "faculty") {
     email = normalizeEmail(parsed.email);
     displayName = normalizePersonName(parsed.displayName);
     if (parsed.department) {
@@ -218,7 +226,7 @@ export async function createUser(input: unknown): Promise<User> {
       role: parsed.role,
       // Force-change ON for student/faculty (admin-assigned passwords)
       // Force-change OFF for admin (they self-set their own)
-      mustChangePassword: parsed.role !== 'admin',
+      mustChangePassword: parsed.role !== "admin",
       createdAt: now,
       updatedAt: now,
     };
@@ -242,10 +250,7 @@ export async function createUser(input: unknown): Promise<User> {
  * through /change-password (user-driven, requires current password).
  * Student LRN changes are allowed but trigger a uniqueness re-check.
  */
-export async function updateUser(
-  uid: string,
-  input: unknown
-): Promise<User> {
+export async function updateUser(uid: string, input: unknown): Promise<User> {
   const parsed: UpdateUserInput = UpdateUserSchema.parse(input);
 
   // If LRN is being changed, re-check uniqueness
@@ -253,7 +258,7 @@ export async function updateUser(
     const existing = await getStudentByNumber(parsed.studentNumber);
     if (existing && existing.uid !== uid) {
       throw new Error(
-        `Student number ${parsed.studentNumber} is already in use`
+        `Student number ${parsed.studentNumber} is already in use`,
       );
     }
   }
@@ -307,7 +312,7 @@ export async function deleteUser(uid: string): Promise<void> {
  */
 export async function changeUserPassword(
   uid: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> {
   // 1. Update password in Firebase Auth
   await adminAuth.updateUser(uid, { password: newPassword });
@@ -322,5 +327,3 @@ export async function changeUserPassword(
     updatedAt: Timestamp.now(),
   });
 }
-
-
