@@ -18,6 +18,11 @@
  * the default single-field index.
  */
 
+import "server-only";
+
+import { collections } from "@/services/firestore";
+import type { Role } from "@/features/users/types";
+
 // Note: the existing user.service.ts already imports from
 // '@/services/firestore', so no new imports are needed.
 
@@ -32,7 +37,7 @@ export async function countUsersByRole(role: Role): Promise<number> {
   try {
     const snapshot = await collections
       .users()
-      .where('role', '==', role)
+      .where("role", "==", role)
       .count()
       .get();
     return snapshot.data().count;
@@ -41,7 +46,7 @@ export async function countUsersByRole(role: Role): Promise<number> {
     // to 0 rather than crashing the homepage. Hero will render "0 students"
     // for one render cycle until the next revalidate (60s); not great, but
     // doesn't take down the site.
-    console.error('[countUsersByRole]', error);
+    console.error("[countUsersByRole]", error);
     return 0;
   }
 }
