@@ -13,7 +13,11 @@
       "PowerShell(try { $r = Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing -TimeoutSec 5; $r.StatusCode } catch { \"DOWN: $\\($_.Exception.Message\\)\" })",
       "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Force)",
-      "PowerShell(\"cleared\")"
+      "PowerShell(\"cleared\")",
+      "PowerShell($f = Get-Item \"c:\\\\Users\\\\HP\\\\BNHS-CIS-Web\\\\public\\\\images\\\\BNHS Cover.jpg\"; \"Size: $\\([Math]::Round\\($f.Length/1MB,2\\)\\) MB\")",
+      "Bash(npx --no-install playwright-cli run-code --filename=.tmp-shot.js)",
+      "Bash(npx --no-install playwright-cli close)",
+      "PowerShell(try { \\(Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing -TimeoutSec 3\\).StatusCode } catch { \"DOWN\" })"
     ]
   }
 }

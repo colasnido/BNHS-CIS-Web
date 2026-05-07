@@ -1,7 +1,6 @@
 import { FeaturedVideo } from '@/features/media/components/FeaturedVideo';
 import { Testimonials } from '@/features/media/components/Testimonials';
 import { PhotoGallery } from '@/features/media/components/PhotoGallery';
-import { EventHighlights } from '@/features/media/components/EventHighlights';
 import { Achievements } from '@/features/media/components/Achievements';
 import { FinalCTA } from '@/features/media/components/FinalCTA';
 
@@ -55,7 +54,6 @@ export default function MediaPage() {
       />
       <Testimonials />
       <PhotoGallery />
-      <EventHighlights />
       <Achievements />
       <FinalCTA />
     </>

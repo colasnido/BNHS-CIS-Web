@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ROUTES } from '@/constants/routes';
 import { countUsersByRole } from '@/services/user.service';
@@ -36,6 +37,30 @@ export async function HeroSection() {
       className="relative overflow-hidden bg-gradient-to-b from-[#0a1428] via-[#0f1f3a] to-[#14233f] text-white"
       aria-labelledby="hero-heading"
     >
+      {/* Backdrop photo of the school grounds. Decorative — the section is
+          labelled by the hero heading, so empty alt is correct. priority
+          tells next/image to skip lazy-loading since this is above-the-fold. */}
+      <Image
+        src="/images/bnhs-cover.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
+      />
+      {/* Dark overlay, heavier on the left where the headline + body text
+          sits, fading to ~45% on the right so the photo reads behind the
+          frosted-glass stats panel. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,20,40,0.92)_0%,rgba(10,20,40,0.78)_45%,rgba(10,20,40,0.45)_100%)]"
+      />
+      {/* Subtle bottom darken so the section transitions cleanly into
+          QuickLinks without a hard color seam. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a1428]/70 to-transparent"
+      />
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(200,168,92,0.18),transparent)]"

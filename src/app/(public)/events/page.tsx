@@ -15,12 +15,18 @@ export default async function EventsPage() {
 
   return (
     <>
-      <section className="border-b border-slate-200 bg-slate-50">
+      <section className="border-b border-slate-200 bg-[#f8f7f3]">
         <Container>
           <div className="py-12 sm:py-16">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
-              School Calendar
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
+                School Calendar
+              </p>
+              <span
+                aria-hidden="true"
+                className="h-px flex-1 bg-gradient-to-r from-[#c8a85c]/50 via-[#c8a85c]/20 to-transparent"
+              />
+            </div>
             <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               Events
             </h1>

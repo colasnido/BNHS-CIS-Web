@@ -1,158 +1,151 @@
 import Image from 'next/image';
 
 /**
- * Media page — Section 3: Photo Gallery (Categorized)
+ * Media page — Photo gallery.
  *
- * Four categories, stacked vertically, each rendering a 5×4 grid (20 photos
- * per category, 80 total). Per design decision: stacked sub-sections, not
- * a tab/filter UI. This keeps the entire page server-rendered (no JS) and
- * matches how everything else on the site is structured.
+ * Single curated grid of school event photos. Hand-written array (rather than
+ * `makePhotos()` auto-generation) so each image gets descriptive alt text for
+ * screen readers and image search.
+ *
+ * To add more photos: drop the file into /public/images/media/events/ and add
+ * an entry below. To remove: delete from the array. The grid handles any count
+ * from 1 upward — collapses naturally on the last row.
  *
  * Performance:
- *   - Every image uses next/image with `loading="lazy"` (default below-fold)
- *   - sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
- *     tells Next/Image to serve appropriately-sized variants for each
- *     viewport — a phone gets a 200px-wide variant, not the full 1200px.
- *   - Aspect-ratio container reserves layout space, so images loading in
- *     don't cause cumulative layout shift (CLS).
- *
- * To add fewer photos: just remove items from the relevant array. The grid
- * collapses naturally — 17 photos render as 5+5+5+2.
- *
- * To add more: add entries to the array. With more than 20 per category,
- * consider adding pagination or a "view more" link rather than letting the
- * page balloon.
+ *   - next/image with `loading="lazy"` (default below-fold)
+ *   - sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" gives
+ *     a phone a 200px-wide variant rather than the full 1200px.
+ *   - Aspect-ratio container reserves layout space → no CLS.
  */
 
 interface Photo {
-  /** Path under /public — leave as-is until the file exists. */
   src: string;
-  /** Alt text. Keep descriptive; "photo" or "image" is bad alt text. */
   alt: string;
 }
 
-interface Category {
-  id: string;
-  title: string;
-  description: string;
-  photos: Photo[];
-}
-
-// Helper: builds a photo array given a count + path prefix.
-// Saves writing 20 nearly-identical entries by hand.
-function makePhotos(prefix: string, count: number, altBase: string): Photo[] {
-  return Array.from({ length: count }, (_, i) => ({
-    src: `/images/media/${prefix}/${prefix}-${String(i + 1).padStart(2, '0')}.jpg`,
-    alt: `${altBase} — photo ${i + 1}`,
-  }));
-}
-
-const CATEGORIES: Category[] = [
+const PHOTOS: Photo[] = [
   {
-    id: 'events',
-    title: 'Events',
-    description:
-      'Foundation Day, Buwan ng Wika, Family Day, Recognition, and other school-wide gatherings.',
-    photos: makePhotos('events', 20, 'School event'),
+    src: '/images/media/events/drum-corps-01.jpg',
+    alt: 'BNHS drum and lyre corps drummer in parade uniform',
   },
   {
-    id: 'classrooms',
-    title: 'Classrooms',
-    description:
-      'Day-to-day learning across our Junior and Senior High School classrooms.',
-    photos: makePhotos('classrooms', 20, 'Classroom scene'),
+    src: '/images/media/events/drum-corps-02.jpg',
+    alt: 'BNHS drum and lyre corps performing at a community parade',
   },
   {
-    id: 'facilities',
-    title: 'Facilities',
-    description:
-      'Our laboratories, library, sports areas, and other learning spaces.',
-    photos: makePhotos('facilities', 20, 'School facility'),
+    src: '/images/media/events/drum-corps-03.jpg',
+    alt: 'BNHS drum and lyre corps members marching',
   },
   {
-    id: 'extracurriculars',
-    title: 'Extracurriculars',
-    description:
-      'Clubs, performances, sports teams, and student-led activities.',
-    photos: makePhotos('extracurriculars', 20, 'Extracurricular activity'),
+    src: '/images/media/events/drum-corps-04.jpg',
+    alt: 'BNHS color guard at a community event',
+  },
+  {
+    src: '/images/media/events/drum-corps-05.jpg',
+    alt: 'BNHS color guard with gold flags during a parade',
+  },
+  {
+    src: '/images/media/events/drum-corps-06.jpg',
+    alt: 'BNHS drum and lyre corps in formation',
+  },
+  {
+    src: '/images/media/events/drum-corps-07.jpg',
+    alt: 'BNHS color guard carrying letter shields',
+  },
+  {
+    src: '/images/media/events/buwan-ng-wika.jpg',
+    alt: 'Buwan ng Wika celebration at BNHS',
+  },
+  {
+    src: '/images/media/events/field-day-01.jpg',
+    alt: 'BNHS field day activities',
+  },
+  {
+    src: '/images/media/events/field-day-02.jpg',
+    alt: 'BNHS field day activities',
+  },
+  {
+    src: '/images/media/events/field-day-03.jpg',
+    alt: 'BNHS field day activities',
+  },
+  {
+    src: '/images/media/events/athletes.jpg',
+    alt: 'BNHS student athletes',
+  },
+  {
+    src: '/images/media/events/graduation.jpg',
+    alt: 'BNHS graduation ceremony',
+  },
+  {
+    src: '/images/media/events/recognition-01.jpg',
+    alt: 'BNHS recognition ceremony',
+  },
+  {
+    src: '/images/media/events/recognition-02.jpg',
+    alt: 'BNHS recognition ceremony',
+  },
+  {
+    src: '/images/media/events/ojt-01.jpg',
+    alt: 'BNHS senior high on-the-job training program',
+  },
+  {
+    src: '/images/media/events/ojt-02.jpg',
+    alt: 'BNHS senior high on-the-job training program',
+  },
+  {
+    src: '/images/media/events/extracurricular-01.jpg',
+    alt: 'BNHS extracurricular activity',
+  },
+  {
+    src: '/images/media/events/extracurricular-02.jpg',
+    alt: 'BNHS extracurricular activity',
   },
 ];
 
-/**
- * Reusable grid for one category's photos. Pulled out as a sub-component
- * so each category section is identical in layout — adjust this once and
- * all four categories update.
- */
-function GalleryGrid({ photos }: { photos: Photo[] }) {
-  return (
-    <ul
-      role="list"
-      // 5×4 on desktop, scales down: 2 col mobile, 3 col tablet, 5 col desktop.
-      // Tight gaps (gap-2) so the grid reads as a unified collage rather
-      // than separated cards.
-      className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5"
-    >
-      {photos.map((photo, i) => (
-        <li key={photo.src} className="overflow-hidden rounded-md bg-slate-100">
-          {/* Square aspect — uniform grid reads cleaner than mixed ratios.
-              Aspect-ratio is set via the wrapper, image fills it. */}
-          <div className="relative aspect-square w-full">
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              fill
-              // Below-fold lazy loading is the default for Next/Image; we
-              // only mark `priority` for above-the-fold imagery (e.g. the
-              // featured video thumbnail). Don't touch this default.
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-              className="object-cover transition hover:scale-105"
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export function PhotoGallery() {
   return (
-    // Wrapping section — semantic group, but each category is a sub-section
-    // with its own h2 below.
-    <div className="bg-slate-50">
-      {CATEGORIES.map((category, idx) => (
-        <section
-          key={category.id}
-          aria-labelledby={`gallery-${category.id}-heading`}
-          // Alternating background between categories: white on first/third,
-          // slate-50 on second/fourth. Subtle but separates them visually.
-          className={`border-b border-slate-200 py-14 sm:py-16 ${
-            idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'
-          }`}
-        >
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c8a85c]">
-                  Gallery
-                </p>
-                <h2
-                  id={`gallery-${category.id}-heading`}
-                  className="mt-2 font-serif text-2xl font-semibold text-slate-900 sm:text-3xl"
-                >
-                  {category.title}
-                </h2>
-              </div>
-              <p className="max-w-md text-sm leading-relaxed text-slate-600 sm:text-right">
-                {category.description}
-              </p>
-            </div>
-
-            <div className="mt-8">
-              <GalleryGrid photos={category.photos} />
-            </div>
+    <section
+      aria-labelledby="gallery-heading"
+      className="border-b border-slate-200 bg-[#f8f7f3] py-14 sm:py-16"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
+              Gallery
+            </p>
+            <h2
+              id="gallery-heading"
+              className="mt-2 font-serif text-2xl font-semibold text-slate-900 sm:text-3xl"
+            >
+              A look at life at Badiang
+            </h2>
           </div>
-        </section>
-      ))}
-    </div>
+          <p className="max-w-md text-sm leading-relaxed text-slate-600 sm:text-right">
+            Drum &amp; lyre corps, Buwan ng Wika, field day, recognition,
+            graduation, and the moments in between.
+          </p>
+        </div>
+
+        <ul
+          role="list"
+          className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5"
+        >
+          {PHOTOS.map((photo) => (
+            <li key={photo.src} className="overflow-hidden bg-slate-100">
+              <div className="relative aspect-square w-full">
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                  className="object-cover transition hover:scale-105"
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }

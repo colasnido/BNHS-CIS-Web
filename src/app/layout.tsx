@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Navbar } from "@/components/ui/Navbar";
-import { Footer } from "@/components/ui/Footer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -14,6 +12,11 @@ export const metadata: Metadata = {
   description: "Official website of Badiang National High School.",
 };
 
+/**
+ * Root layout — html/body shell only. Navbar + Footer live in the (public)
+ * route group's layout so they never render on dashboard pages, which have
+ * their own DashboardShell.
+ */
 export default function RootLayout({
   children,
 }: {
@@ -21,10 +24,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="flex min-h-screen flex-col bg-white font-sans text-slate-900 antialiased">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
+        {children}
       </body>
     </html>
   );
