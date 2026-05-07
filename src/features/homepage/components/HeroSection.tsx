@@ -48,12 +48,16 @@ export async function HeroSection() {
         sizes="100vw"
         className="object-cover object-center"
       />
-      {/* Dark overlay, heavier on the left where the headline + body text
-          sits, fading to ~45% on the right so the photo reads behind the
-          frosted-glass stats panel. */}
+      {/* Dark overlay — direction differs by breakpoint:
+          - Below lg (single-column stacked layout): vertical, heavy at top
+            where the heading sits, lighter at the bottom so the photo
+            shows through behind the stats card.
+          - lg+ (side-by-side layout): horizontal left-heavy as before so
+            the headline area is dark and the photo reads behind the
+            right-side glass stats panel. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,20,40,0.92)_0%,rgba(10,20,40,0.78)_45%,rgba(10,20,40,0.45)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(10,20,40,0.88)_0%,rgba(10,20,40,0.82)_50%,rgba(10,20,40,0.5)_100%)] lg:bg-[linear-gradient(to_right,rgba(10,20,40,0.92)_0%,rgba(10,20,40,0.78)_45%,rgba(10,20,40,0.45)_100%)]"
       />
       {/* Subtle bottom darken so the section transitions cleanly into
           QuickLinks without a hard color seam. */}

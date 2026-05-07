@@ -54,7 +54,7 @@ export async function NewsAndEvents() {
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Events */}
             <div className="border border-slate-200 bg-white p-6">
-              <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
+              <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                 <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
                   <span
                     aria-hidden="true"
@@ -120,7 +120,7 @@ export async function NewsAndEvents() {
             {/* Announcements — uses AnnouncementCard compact variant which
                 now shows summary preview internally. */}
             <div className="border border-slate-200 bg-white p-6">
-              <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
+              <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                 <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
                   <span
                     aria-hidden="true"
