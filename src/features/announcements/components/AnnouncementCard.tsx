@@ -49,7 +49,7 @@ export function AnnouncementCard({
     return (
       <Link
         href={detailHref}
-        className="group block rounded-lg px-3 py-4 transition-colors ring-1 ring-transparent hover:bg-[#0f1f3a]/[0.06] hover:shadow-[0_6px_16px_rgba(15,31,58,0.08)] hover:ring-[#c8a85c]/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
+        className="group block px-3 py-4 transition-colors ring-1 ring-inset ring-transparent hover:bg-[#0f1f3a]/[0.04] hover:ring-[#c8a85c]/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
       >
         <div className="flex items-center gap-3">
           <span

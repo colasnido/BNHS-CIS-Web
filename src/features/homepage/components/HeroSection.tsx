@@ -1,36 +1,24 @@
 import Link from 'next/link';
 import { ROUTES } from '@/constants/routes';
 import { countUsersByRole } from '@/services/user.service';
+import { AnimatedCount } from './AnimatedCount';
 
 /**
- * Format an integer for display in the hero stats card.
+ * HeroSection — public homepage hero with school name, intro, and stats.
  *
- * Real counts get the actual number; if a count is 0 (e.g., empty Firestore
- * during initial setup, or the count call failed and returned 0), we still
- * show "0" rather than hiding the stat — predictable layout > clever empty
- * states for an institutional homepage.
+ * Update notes:
+ *   - Stat values now wrapped in <AnimatedCount> for the count-up effect.
+ *     Server still fetches the numeric target; the small client island
+ *     handles the animation.
+ *   - Everything else unchanged from the data-fetch update.
  *
- * For larger numbers, en-US grouping makes "1,234" instead of "1234".
+ * Layout/colors carried over from previous version unchanged.
  */
 function formatCount(n: number): string {
   return n.toLocaleString('en-US');
 }
 
-/**
- * HeroSection — public homepage hero with school name, intro, and at-a-glance
- * stats. Now an async server component so it can fetch real student/faculty
- * counts from Firestore on each (cached) render.
- *
- * Caching: the homepage uses `export const revalidate = 60` so this whole
- * component is regenerated at most once per minute. We don't add an
- * additional cache layer here.
- *
- * Two stats stay static per design decision:
- *   - College acceptance: a long-running statistic, not stored anywhere
- *   - Clubs & programs: no clubs collection in the database
- */
 export async function HeroSection() {
-  // Run the two count queries in parallel — they're independent.
   const [studentCount, facultyCount] = await Promise.all([
     countUsersByRole('student'),
     countUsersByRole('faculty'),
@@ -39,23 +27,25 @@ export async function HeroSection() {
   const stats = [
     { value: formatCount(studentCount), label: 'Students enrolled' },
     { value: formatCount(facultyCount), label: 'Faculty & staff' },
-    { value: '82%', label: 'College acceptance' }, // static — long-running stat
-    { value: '20+', label: 'Clubs & programs' },   // static — no club data source
+    { value: '82%', label: 'College acceptance' },
+    { value: '20+', label: 'Clubs & programs' },
   ];
 
   return (
     <section
-      className="relative overflow-hidden bg-[#0f1f3a] text-white"
+      className="relative overflow-hidden bg-gradient-to-b from-[#0a1428] via-[#0f1f3a] to-[#14233f] text-white"
       aria-labelledby="hero-heading"
     >
-      {/* Decorative gradient — pure CSS, no images, no JS */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(200,168,92,0.15),transparent)]"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(200,168,92,0.18),transparent)]"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#c8a85c]/40 to-transparent"
       />
 
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-12 lg:gap-16 lg:px-8 lg:py-28">
-        {/* Left: messaging */}
         <div className="lg:col-span-7">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
             Welcome to
@@ -77,7 +67,7 @@ export async function HeroSection() {
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link
               href={ROUTES.ABOUT}
-              className="inline-flex items-center gap-2 bg-[#c8a85c] px-6 py-3 text-sm font-semibold text-[#0f1f3a] transition-colors hover:bg-[#d4b76b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex items-center gap-2 bg-gradient-to-b from-[#d4b674] via-[#c8a85c] to-[#a8893d] px-6 py-3 text-sm font-semibold text-[#0f1f3a] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] transition-all hover:from-[#dcc084] hover:via-[#d4b674] hover:to-[#b89a4a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               About the School
               <span aria-hidden="true">→</span>
@@ -91,12 +81,15 @@ export async function HeroSection() {
           </div>
         </div>
 
-        {/* Right: stats panel — institutional fact card instead of generic decoration */}
         <aside
           className="lg:col-span-5 lg:pl-8"
           aria-label="School at a glance"
         >
-          <div className="border border-white/10 bg-white/[0.03] p-8 backdrop-blur-[2px]">
+          <div className="relative border border-[#c8a85c]/25 bg-white/[0.06] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent"
+            />
             <h2 className="font-serif text-sm font-semibold uppercase tracking-wider text-[#c8a85c]">
               At a glance
             </h2>
@@ -107,7 +100,10 @@ export async function HeroSection() {
                     {stat.label}
                   </dt>
                   <dd className="mt-1 font-serif text-3xl font-semibold text-white">
-                    {stat.value}
+                    {/* AnimatedCount runs on the client; the server-rendered
+                        markup contains the final value as well, so users
+                        without JS still see the correct number. */}
+                    <AnimatedCount formatted={stat.value} />
                   </dd>
                 </div>
               ))}

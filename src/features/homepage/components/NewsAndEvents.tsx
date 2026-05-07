@@ -39,13 +39,21 @@ export async function NewsAndEvents() {
     <section className="bg-white" aria-labelledby="news-events-heading">
       <Container>
         <div className="py-16 sm:py-20">
-          <h2 id="news-events-heading" className="sr-only">
-            News and upcoming events
-          </h2>
+          <div className="mb-12 max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
+              What&apos;s happening
+            </p>
+            <h2
+              id="news-events-heading"
+              className="mt-3 font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl"
+            >
+              News &amp; events
+            </h2>
+          </div>
 
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Events */}
-            <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,31,58,0.05)]">
+            <div className="border border-slate-200 bg-white p-6">
               <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
                 <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
                   <span
@@ -63,7 +71,7 @@ export async function NewsAndEvents() {
               </div>
 
               {upcomingEvents.length === 0 ? (
-                <div className="mt-6 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
+                <div className="mt-6 border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
                   No upcoming events yet.
                 </div>
               ) : (
@@ -75,10 +83,10 @@ export async function NewsAndEvents() {
                       <li key={event.id}>
                         <Link
                           href={`/events/${event.id}`}
-                          className="group flex items-start gap-5 rounded-lg px-3 py-4 transition-colors ring-1 ring-transparent hover:bg-[#0f1f3a]/[0.06] hover:shadow-[0_6px_16px_rgba(15,31,58,0.08)] hover:ring-[#c8a85c]/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8a85c]"
+                          className="group flex items-start gap-5 px-3 py-4 transition-colors ring-1 ring-inset ring-transparent hover:bg-[#0f1f3a]/[0.04] hover:ring-[#c8a85c]/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#c8a85c]"
                         >
                           {/* Date block — distinctive, scannable */}
-                          <div className="flex w-16 shrink-0 flex-col items-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center transition-colors group-hover:border-[#c8a85c]/60 group-hover:bg-[#c8a85c]/10">
+                          <div className="flex w-16 shrink-0 flex-col items-center border border-slate-200 bg-white px-2 py-2 text-center transition-colors group-hover:border-[#c8a85c]/60 group-hover:bg-[#c8a85c]/10">
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-[#c8a85c]">
                               {dateParts.month}
                             </span>
@@ -111,7 +119,7 @@ export async function NewsAndEvents() {
 
             {/* Announcements — uses AnnouncementCard compact variant which
                 now shows summary preview internally. */}
-            <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgba(15,31,58,0.05)]">
+            <div className="border border-slate-200 bg-white p-6">
               <div className="flex items-baseline justify-between border-b border-slate-200 pb-4">
                 <h3 className="flex items-center gap-3 font-serif text-2xl font-semibold tracking-tight text-slate-900">
                   <span

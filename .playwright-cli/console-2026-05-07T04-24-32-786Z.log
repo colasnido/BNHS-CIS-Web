@@ -1,0 +1,33 @@
+[     934ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[    1101ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[    1288ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[  136368ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  136439ms] [LOG] [Fast Refresh] done in 179ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  225690ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  225789ms] [LOG] [Fast Refresh] done in 205ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  241038ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  241119ms] [LOG] [Fast Refresh] done in 188ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  241981ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  242024ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  304085ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  304115ms] [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  311509ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  311525ms] [LOG] [Fast Refresh] done in 123ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  402735ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  402863ms] [LOG] [Fast Refresh] done in 228ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  403790ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  403826ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  419768ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  419827ms] [LOG] [Fast Refresh] done in 161ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  436825ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  436926ms] [LOG] [Fast Refresh] done in 217ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  437316ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  437352ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  482995ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  483068ms] [LOG] [Fast Refresh] done in 181ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  499285ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  499433ms] [LOG] [Fast Refresh] done in 251ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  499882ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  499930ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  558900ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431
+[  558955ms] [LOG] [Fast Refresh] done in 170ms @ http://localhost:3000/_next/static/chunks/0obu_next_dist_11rbr97._.js:2431

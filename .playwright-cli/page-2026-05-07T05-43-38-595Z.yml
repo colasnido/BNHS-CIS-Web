@@ -1,0 +1,217 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: Department of Education · Region VII · School ID 302812
+      - button "Sign In" [ref=e8]:
+        - text: Sign In
+        - img [ref=e9]
+    - navigation "Primary" [ref=e13]:
+      - link "Badiang National High School Est. 1969" [ref=e14] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e16]:
+          - generic [ref=e17]: Badiang National High School
+          - generic [ref=e18]: Est. 1969
+      - list [ref=e19]:
+        - listitem [ref=e20]:
+          - link "Home" [ref=e21] [cursor=pointer]:
+            - /url: /
+            - text: Home
+        - listitem [ref=e23]:
+          - link "About" [ref=e24] [cursor=pointer]:
+            - /url: /about
+        - listitem [ref=e25]:
+          - link "Events" [ref=e26] [cursor=pointer]:
+            - /url: /events
+        - listitem [ref=e27]:
+          - link "Announcements" [ref=e28] [cursor=pointer]:
+            - /url: /announcements
+        - listitem [ref=e29]:
+          - link "Media" [ref=e30] [cursor=pointer]:
+            - /url: /media
+  - main [ref=e31]:
+    - region "Badiang National High School" [ref=e32]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Welcome to
+          - heading "Badiang National High School" [level=1] [ref=e37]:
+            - text: Badiang National
+            - text: High School
+          - paragraph [ref=e38]: A public secondary institution serving the community of Badiang since 1969. Where curiosity meets character — preparing students for college, career, and lifelong learning.
+          - generic [ref=e39]:
+            - link "About the School" [ref=e40] [cursor=pointer]:
+              - /url: /about
+              - text: About the School
+              - generic [ref=e41]: →
+            - link "View Events" [ref=e42] [cursor=pointer]:
+              - /url: /events
+        - complementary "School at a glance" [ref=e43]:
+          - generic [ref=e44]:
+            - heading "At a glance" [level=2] [ref=e45]
+            - generic [ref=e46]:
+              - generic [ref=e47]:
+                - term [ref=e48]: Students enrolled
+                - definition [ref=e49]: "2"
+              - generic [ref=e50]:
+                - term [ref=e51]: Faculty & staff
+                - definition [ref=e52]: "21"
+              - generic [ref=e53]:
+                - term [ref=e54]: College acceptance
+                - definition [ref=e55]: 82%
+              - generic [ref=e56]:
+                - term [ref=e57]: Clubs & programs
+                - definition [ref=e58]: 20+
+    - region "Quick access" [ref=e59]:
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - heading "Quick access" [level=2] [ref=e63]
+          - generic [ref=e64]: Jump to a section
+        - list [ref=e65]:
+          - listitem [ref=e66]:
+            - link "Admissions Enrollment requirements and application process" [ref=e67] [cursor=pointer]:
+              - /url: /about
+              - generic [ref=e68]: Admissions
+              - generic [ref=e69]: Enrollment requirements and application process
+              - generic [ref=e70]: →
+          - listitem [ref=e71]:
+            - link "Academic Calendar Important dates, holidays, and schedules" [ref=e72] [cursor=pointer]:
+              - /url: /events
+              - generic [ref=e73]: Academic Calendar
+              - generic [ref=e74]: Important dates, holidays, and schedules
+              - generic [ref=e75]: →
+          - listitem [ref=e76]:
+            - link "Announcements Latest news, advisories, and updates" [ref=e77] [cursor=pointer]:
+              - /url: /announcements
+              - generic [ref=e78]: Announcements
+              - generic [ref=e79]: Latest news, advisories, and updates
+              - generic [ref=e80]: →
+          - listitem [ref=e81]:
+            - link "School Gallery Photos and videos from school life" [ref=e82] [cursor=pointer]:
+              - /url: /media
+              - generic [ref=e83]: School Gallery
+              - generic [ref=e84]: Photos and videos from school life
+              - generic [ref=e85]: →
+    - region "News and upcoming events" [ref=e86]:
+      - generic [ref=e88]:
+        - heading "News and upcoming events" [level=2] [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - heading "Upcoming events" [level=3] [ref=e93]:
+                - generic [ref=e95]: Upcoming events
+              - link "View all →" [ref=e96] [cursor=pointer]:
+                - /url: /events
+            - list [ref=e97]:
+              - listitem [ref=e98]:
+                - link "MAY 19 Brigada Eskwela Clean up drive before the school year Plaza" [ref=e99] [cursor=pointer]:
+                  - /url: /events/SmdCEiqD7L068xdDzt8h
+                  - generic [ref=e100]:
+                    - generic [ref=e101]: MAY
+                    - generic [ref=e102]: "19"
+                  - generic [ref=e103]:
+                    - paragraph [ref=e104]: Brigada Eskwela
+                    - paragraph [ref=e105]: Clean up drive before the school year
+                    - paragraph [ref=e106]: Plaza
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - heading "Recent announcements" [level=3] [ref=e109]:
+                - generic [ref=e111]: Recent announcements
+              - link "View all →" [ref=e112] [cursor=pointer]:
+                - /url: /announcements
+            - list [ref=e113]:
+              - listitem [ref=e114]:
+                - 'link "high May 6, 2026 BRIGADA ESKWELA The Department of Education has announced the 2026 Brigada Eskwela theme as “Bayanihan sa Paaralan: Nagkakaisa para sa Kaayusan at Kaalaman”. The campaign, which focuses on community-led efforts to create clean, safe, and functional school facilities for SY 2026-2027, will officially take place from June 1–5, 202" [ref=e115] [cursor=pointer]':
+                  - /url: /announcements/E12m9Hsr5ysUH1dbxh9i
+                  - generic [ref=e116]:
+                    - generic [ref=e117]: high
+                    - generic [ref=e118]: May 6, 2026
+                  - paragraph [ref=e119]: BRIGADA ESKWELA
+                  - paragraph [ref=e120]: "The Department of Education has announced the 2026 Brigada Eskwela theme as “Bayanihan sa Paaralan: Nagkakaisa para sa Kaayusan at Kaalaman”. The campaign, which focuses on community-led efforts to create clean, safe, and functional school facilities for SY 2026-2027, will officially take place from June 1–5, 202"
+              - listitem [ref=e121]:
+                - link "high May 5, 2026 2026-2027 ENROLMENT Attend Brigada Eskwela and have yourself confirmed for enrollment made last February 2026. For new enrollees, submit card to the assigned teacher and fill-up enrollment form" [ref=e122] [cursor=pointer]:
+                  - /url: /announcements/3gIn9ylhrETeeZrVzCPU
+                  - generic [ref=e123]:
+                    - generic [ref=e124]: high
+                    - generic [ref=e125]: May 5, 2026
+                  - paragraph [ref=e126]: 2026-2027 ENROLMENT
+                  - paragraph [ref=e127]: Attend Brigada Eskwela and have yourself confirmed for enrollment made last February 2026. For new enrollees, submit card to the assigned teacher and fill-up enrollment form
+    - region "Community voice" [ref=e128]:
+      - generic [ref=e130]:
+        - heading "Community voice" [level=2] [ref=e131]
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - figure "Maria Santos Parent, Class of 2025" [ref=e135]:
+              - text: “
+              - blockquote [ref=e136]: The teachers here genuinely invest in their students. My daughter came in shy and unsure — she's leaving as a confident young leader ready for university.
+              - generic [ref=e137]:
+                - generic [ref=e138]: MS
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Maria Santos
+                  - generic [ref=e141]: Parent, Class of 2025
+            - figure:
+              - text: “
+              - blockquote: The teachers push us to think bigger than we thought we could. I came in unsure of what I wanted to do; now I'm preparing applications for engineering programs.
+              - generic:
+                - generic: JR
+                - generic:
+                  - generic: Joshua Reyes
+                  - generic: Grade 12 STEM
+            - figure:
+              - text: “
+              - blockquote: Badiang gave me more than a diploma — it gave me a community I still lean on. The lessons I picked up here carried me through college and into my first job.
+              - generic:
+                - generic: AB
+                - generic:
+                  - generic: Ana Bautista
+                  - generic: Alumna, Class of 2018
+          - tablist "Select testimonial" [ref=e142]:
+            - tab "Show testimonial from Maria Santos" [selected] [ref=e143] [cursor=pointer]
+            - tab "Show testimonial from Joshua Reyes" [ref=e145] [cursor=pointer]
+            - tab "Show testimonial from Ana Bautista" [ref=e147] [cursor=pointer]
+    - region "Visit our campus" [ref=e149]:
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - heading "Visit our campus" [level=2] [ref=e153]
+          - paragraph [ref=e154]: Schedule a tour, meet our faculty, and see why families across the region choose Badiang National High School.
+        - link "Plan a Visit" [ref=e155] [cursor=pointer]:
+          - /url: /about
+          - text: Plan a Visit
+          - generic [ref=e156]: →
+  - contentinfo [ref=e157]:
+    - generic [ref=e158]:
+      - generic [ref=e159]:
+        - generic [ref=e160]:
+          - link "BNHS Badiang National High School" [ref=e161] [cursor=pointer]:
+            - /url: /
+            - img "BNHS" [ref=e162]
+            - generic [ref=e163]: Badiang National High School
+          - paragraph [ref=e164]: A public secondary school under the Department of Education, committed to excellence in education and character formation since 1969.
+        - navigation "Footer sitemap" [ref=e165]:
+          - heading "Explore" [level=3] [ref=e166]
+          - list [ref=e167]:
+            - listitem [ref=e168]:
+              - link "Home" [ref=e169] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e170]:
+              - link "About" [ref=e171] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e172]:
+              - link "Events" [ref=e173] [cursor=pointer]:
+                - /url: /events
+            - listitem [ref=e174]:
+              - link "Announcements" [ref=e175] [cursor=pointer]:
+                - /url: /announcements
+            - listitem [ref=e176]:
+              - link "Media" [ref=e177] [cursor=pointer]:
+                - /url: /media
+        - generic [ref=e178]:
+          - heading "Contact" [level=3] [ref=e179]
+          - generic [ref=e180]:
+            - paragraph [ref=e181]: Anda Pronicial Road Purok 3, Barangay Badiang
+            - paragraph [ref=e182]: Region VII, Philippines
+            - paragraph [ref=e183]:
+              - link "+63 (000) 000-0000" [ref=e184] [cursor=pointer]:
+                - /url: tel:+6300000000
+            - paragraph [ref=e185]:
+              - link "info@bnhs.edu.ph" [ref=e186] [cursor=pointer]:
+                - /url: mailto:info@bnhs.edu.ph
+      - paragraph [ref=e188]: © 2026 Badiang National High School. All rights reserved.

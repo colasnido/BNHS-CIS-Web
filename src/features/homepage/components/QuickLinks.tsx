@@ -28,25 +28,20 @@ const links = [
 export function QuickLinks() {
   return (
     <section
-      className="border-b border-slate-200 bg-slate-50"
+      className="border-b border-slate-200 bg-[#f8f7f3]"
       aria-labelledby="quick-links-heading"
     >
       <Container>
         <div className="py-12 sm:py-16">
-          <div className="flex items-baseline justify-between">
-            <h2
-              id="quick-links-heading"
-              className="font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl"
-            >
-              Quick access
-            </h2>
-            <span
-              aria-hidden="true"
-              className="text-xs uppercase tracking-wider text-slate-500"
-            >
-              Jump to a section
-            </span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a85c]">
+            Resources
+          </p>
+          <h2
+            id="quick-links-heading"
+            className="mt-3 font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl"
+          >
+            Quick access
+          </h2>
 
           <ul className="mt-8 grid gap-px overflow-hidden border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
             {links.map((link) => (

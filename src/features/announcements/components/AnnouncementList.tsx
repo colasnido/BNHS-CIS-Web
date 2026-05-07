@@ -12,7 +12,7 @@ export function AnnouncementList({
 }: AnnouncementListProps) {
   if (announcements.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
+      <div className="border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
         No announcements yet.
       </div>
     );

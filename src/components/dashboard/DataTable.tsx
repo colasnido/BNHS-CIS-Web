@@ -293,7 +293,7 @@ export function DataTable<T>({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-[#0f1f3a] focus:outline-none focus:ring-2 outline-[#c8a85c]"
               />
             </div>
           )}
@@ -304,7 +304,7 @@ export function DataTable<T>({
               onChange={(e) =>
                 setActiveFilters((prev) => ({ ...prev, [f.key]: e.target.value }))
               }
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-[#0f1f3a] focus:outline-none focus:ring-2 outline-[#c8a85c]"
             >
               <option value="">{f.label}: All</option>
               {f.options.map((opt) => (
@@ -453,7 +453,7 @@ export function DataTable<T>({
                               type="button"
                               onClick={() => saveEdit(record)}
                               disabled={isSaving}
-                              className="rounded-md bg-blue-600 px-2.5 py-1 font-medium text-white hover:bg-blue-700 disabled:bg-slate-400"
+                              className="rounded-md bg-[#0f1f3a] px-2.5 py-1 font-medium text-white hover:bg-[#1a2f5a] disabled:bg-slate-400"
                             >
                               {isSaving ? '…' : 'Save'}
                             </button>
@@ -506,7 +506,7 @@ function InlineEditCell<T>({
   error?: string;
 }) {
   const baseInputClass =
-    'w-full rounded border border-slate-300 px-2 py-1 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+    'w-full rounded border border-slate-300 px-2 py-1 text-sm shadow-sm focus:border-[#0f1f3a] focus:outline-none focus:ring-1 focus:ring-blue-500';
 
   if (config.type === 'select' && config.options) {
     return (

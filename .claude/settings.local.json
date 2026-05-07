@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(playwright-cli)",
+      "Skill(playwright-cli:*)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o nul -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(npx --no-install playwright-cli open --browser=chrome)",
+      "Bash(npx --no-install playwright-cli run-code --filename=.tmp-diagnose.js)",
+      "Bash(npx --no-install playwright-cli eval \"\\(\\) => { const el = document.querySelector\\('[aria-labelledby=\\\\\"testimonial-heading\\\\\"]'\\); el.scrollIntoView\\({block:'center'}\\); }\")",
+      "Bash(npx --no-install playwright-cli screenshot --filename=testimonial.png)",
+      "Bash(curl.exe -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing -TimeoutSec 5; $r.StatusCode } catch { \"DOWN: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(\"cleared\")"
+    ]
+  }
+}
